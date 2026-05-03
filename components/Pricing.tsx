@@ -1,47 +1,56 @@
 const TIERS = [
   {
-    name: "Starter",
+    name: "Deployment Kit",
     price: "$49",
-    description: "One complete AI workflow system, ready to deploy.",
+    tag: null,
+    description:
+      "One complete AI workflow system. Production-ready config, deployment guide, and observability hooks included.",
     features: [
-      "1 production blueprint",
-      "Full workflow diagrams",
-      "Config schema + documentation",
-      "n8n export included",
-      "Community support",
+      "1 production workflow system",
+      "Deployment config + env schema",
+      "Observability hooks (traces, logs)",
+      "MCP tool integration spec",
+      "n8n + LangChain export",
     ],
-    cta: "Get Starter",
+    meta: "Designed for engineering teams",
+    cta: "Deploy One System",
     highlighted: false,
   },
   {
-    name: "Developer Pack",
+    name: "Multi-System Stack",
     price: "$149",
-    description: "Three systems with advanced configuration and integration guides.",
+    tag: "Most deployed",
+    description:
+      "Three production systems with full integration architecture, eval harnesses, and cross-system observability.",
     features: [
-      "3 production blueprints",
-      "Advanced config options",
-      "Integration guides per tool",
-      "LangChain + n8n exports",
-      "Code walkthrough videos",
-      "Email support",
+      "3 production workflow systems",
+      "Cross-system integration guides",
+      "Eval frameworks per system",
+      "Confidence scoring configs",
+      "Human-in-loop gate specs",
+      "Priority support channel",
     ],
-    cta: "Get Developer Pack",
+    meta: "Used in production workflows",
+    cta: "Deploy Three Systems",
     highlighted: true,
   },
   {
-    name: "Full Systems Suite",
+    name: "AI Workflow OS",
     price: "$249",
-    description: "Everything. All 6 systems, architecture deep-dives, and direct access.",
+    tag: null,
+    description:
+      "The full infrastructure layer. All 6 systems, architecture decision records, and direct engineering access.",
     features: [
-      "All 6 production blueprints",
-      "Architecture decision docs",
-      "Prompt engineering guides",
-      "Evaluation frameworks",
-      "All export formats",
-      "Private community access",
-      "Direct async Q&A",
+      "All 6 production workflow systems",
+      "Architecture decision records",
+      "Full MCP integration library",
+      "Prompt eval + regression suite",
+      "All export formats + adapters",
+      "Private engineering channel",
+      "Async architecture review",
     ],
-    cta: "Get Full Suite",
+    meta: "Full infrastructure layer",
+    cta: "Deploy Full Stack",
     highlighted: false,
   },
 ];
@@ -64,13 +73,14 @@ export default function Pricing() {
             className="text-3xl sm:text-4xl font-bold text-[#f4f4f5] tracking-tight"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Blueprints for real AI automation
+            Production infrastructure, not tutorials.
           </h2>
           <p
-            className="text-[#71717a] mt-3 text-base max-w-md mx-auto"
+            className="text-[#71717a] mt-3 text-base max-w-lg mx-auto"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            One-time purchase. No subscriptions. Ship AI systems, not experiments.
+            One-time purchase. Deployed in real engineering workflows.
+            No subscriptions, no experiments.
           </p>
         </div>
 
@@ -78,41 +88,54 @@ export default function Pricing() {
           {TIERS.map((tier) => (
             <div
               key={tier.name}
-              className={`flex flex-col p-7 ${
-                tier.highlighted
-                  ? "bg-[#111114]"
-                  : "bg-[#0e0e11]"
+              className={`relative flex flex-col p-7 ${
+                tier.highlighted ? "bg-[#111114]" : "bg-[#0e0e11]"
               }`}
             >
-              {tier.highlighted && (
+              {/* Tag */}
+              {tier.tag ? (
                 <div
                   className="text-[9px] font-medium text-[#a3e635] uppercase tracking-widest mb-4"
                   style={{ fontFamily: "var(--font-mono)" }}
                 >
-                  Most popular
+                  {tier.tag}
                 </div>
+              ) : (
+                <div className="mb-4 h-[13px]" />
               )}
 
+              {/* Tier name */}
               <div
                 className="text-sm font-medium text-[#71717a] mb-1"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 {tier.name}
               </div>
+
+              {/* Price */}
               <div
                 className="text-4xl font-bold text-[#f4f4f5] mb-2 tracking-tight"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 {tier.price}
+                <span
+                  className="text-sm font-normal text-[#3f3f46] ml-1.5"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  one-time
+                </span>
               </div>
+
+              {/* Description */}
               <p
-                className="text-xs text-[#52525b] mb-6 leading-relaxed"
+                className="text-xs text-[#52525b] mb-5 leading-relaxed"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 {tier.description}
               </p>
 
-              <ul className="space-y-2.5 mb-8 flex-1">
+              {/* Features */}
+              <ul className="space-y-2.5 mb-6 flex-1">
                 {tier.features.map((feature) => (
                   <li
                     key={feature}
@@ -127,6 +150,15 @@ export default function Pricing() {
                 ))}
               </ul>
 
+              {/* Meta label */}
+              <div
+                className="text-[9px] text-[#3f3f46] uppercase tracking-widest mb-4"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                {tier.meta}
+              </div>
+
+              {/* CTA */}
               <a
                 href="#"
                 className={`text-center text-sm font-medium py-2.5 px-4 rounded transition-all duration-150 ${
@@ -146,7 +178,7 @@ export default function Pricing() {
           className="text-center text-xs text-[#3f3f46] mt-5"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          Secure checkout via Stripe · Instant download · 7-day refund policy
+          Secure checkout via Stripe · Instant delivery · 7-day refund policy
         </p>
       </div>
     </section>
