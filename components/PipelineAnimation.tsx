@@ -2,25 +2,34 @@
 
 import { WorkflowState } from "@/lib/workflowEngine";
 
-const NODES = [
-  { id: 0, label: "Ticket Ingestion", desc: "Parse & normalize", icon: "⬇" },
-  { id: 1, label: "AI Classification", desc: "Intent detection", icon: "◈" },
-  { id: 2, label: "Context Reasoning", desc: "RAG + memory", icon: "⟳" },
-  { id: 3, label: "Response Generation", desc: "LLM synthesis", icon: "✦" },
-  { id: 4, label: "Confidence Scoring", desc: "Quality gate", icon: "◎" },
-  { id: 5, label: "Human Approval", desc: "Review & dispatch", icon: "✓" },
+export interface PipelineNode {
+  label: string;
+  desc: string;
+  icon: string;
+}
+
+const DEFAULT_NODES: PipelineNode[] = [
+  { label: "Ticket Ingestion", desc: "Parse & normalize", icon: "⬇" },
+  { label: "AI Classification", desc: "Intent detection", icon: "◈" },
+  { label: "Context Reasoning", desc: "RAG + memory", icon: "⟳" },
+  { label: "Response Generation", desc: "LLM synthesis", icon: "✦" },
+  { label: "Confidence Scoring", desc: "Quality gate", icon: "◎" },
+  { label: "Human Approval", desc: "Review & dispatch", icon: "✓" },
 ];
 
 interface Props {
   workflowState: WorkflowState;
+  nodes?: PipelineNode[];
 }
 
-export default function PipelineAnimation({ workflowState }: Props) {
+export default function PipelineAnimation({ workflowState, nodes }: Props) {
+  const NODES = nodes ?? DEFAULT_NODES;
   const { steps } = workflowState;
 
   return (
     <div className="flex flex-col gap-0">
       {NODES.map((node, i) => {
+        const nodeId = i;
         const step = steps[i];
         const isRunning = step?.status === "running";
         const isWaiting = step?.status === "waiting_approval";
@@ -29,7 +38,7 @@ export default function PipelineAnimation({ workflowState }: Props) {
         const isActive = isRunning || isWaiting;
 
         return (
-          <div key={node.id}>
+          <div key={nodeId}>
             <div
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-300 ${
                 isActive
