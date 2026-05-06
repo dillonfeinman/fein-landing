@@ -335,7 +335,6 @@ export default function ServiceRequest() {
                             onChange={(e) => set("workflow", e.target.value)}
                             className={`${inputCls(!!errors.workflow)} resize-none`}
                             style={{ fontFamily: "var(--font-display)" }}
-                            autoFocus
                           />
                         </Field>
                         <Field label="What kind of work is it?">
@@ -376,7 +375,6 @@ export default function ServiceRequest() {
                               onChange={(e) => set("name", e.target.value)}
                               className={inputCls(!!errors.name)}
                               style={{ fontFamily: "var(--font-display)" }}
-                              autoFocus
                             />
                           </Field>
                           <Field

@@ -168,7 +168,8 @@ type MobilePanel = "queue" | "pipeline" | "output";
 export default function LiveDemo() {
   const sectionRef  = useRef<HTMLElement>(null);
   const engineRef   = useRef<WorkflowEngine | null>(null);
-  const demoModeRef = useRef<DemoMode>("support");
+  const demoModeRef   = useRef<DemoMode>("support");
+  const inspectModeRef = useRef(false);
 
   const runStartMs       = useRef(0);
   const prevStepStatuses = useRef<string[]>(Array(6).fill("pending"));
@@ -181,6 +182,7 @@ export default function LiveDemo() {
   const [elapsedMs, setElapsedMs]         = useState(0);
   const [traceEntries, setTraceEntries]   = useState<TraceEntry[]>([]);
   const [mobilePanel, setMobilePanel]     = useState<MobilePanel>("output");
+  const [inspectMode, setInspectMode]     = useState(false);
 
   // ── Engine management ────────────────────────────────────────────────────────
 
@@ -193,7 +195,7 @@ export default function LiveDemo() {
     setTraceEntries([]);
     setElapsedMs(0);
     const ticket = TICKETS_BY_MODE[demoModeRef.current][ticketIdx];
-    const engine = new WorkflowEngine(ticket, setWorkflowState);
+    const engine = new WorkflowEngine(ticket, setWorkflowState, { inspect: inspectModeRef.current });
     engineRef.current = engine;
     setRunId(engine.runId);
     engine.execute().catch(() => {});
@@ -210,10 +212,11 @@ export default function LiveDemo() {
     return () => observer.disconnect();
   }, [startEngine]);
 
-  // Auto-switch mobile panel to output when approval/complete/failed
+  // Auto-switch mobile panel to output when approval/complete/failed/step_ready
   useEffect(() => {
     if (
       workflowState.status === "waiting_approval" ||
+      workflowState.status === "step_ready" ||
       workflowState.status === "complete" ||
       workflowState.status === "failed"
     ) {
@@ -235,6 +238,13 @@ export default function LiveDemo() {
   }
 
   function handleReplay() { startEngine(selectedIdx); }
+
+  function handleToggleInspect() {
+    const next = !inspectMode;
+    inspectModeRef.current = next;
+    setInspectMode(next);
+    startEngine(selectedIdx);
+  }
 
   // ── Trace accumulation ───────────────────────────────────────────────────────
 
@@ -273,7 +283,8 @@ export default function LiveDemo() {
   // ── Elapsed timer ────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (workflowState.status === "idle" || workflowState.status === "complete" || workflowState.status === "failed") {
+    const stopped = workflowState.status === "idle" || workflowState.status === "step_ready" || workflowState.status === "complete" || workflowState.status === "failed";
+    if (stopped) {
       if (runStartMs.current) setElapsedMs(Date.now() - runStartMs.current);
       return;
     }
@@ -301,7 +312,8 @@ export default function LiveDemo() {
   const statusConfig: Record<WorkflowStatus, { label: string; color: string; dot: string }> = {
     idle:             { label: "IDLE",     color: "text-[#3f3f46]",  dot: "bg-[#27272a]" },
     running:          { label: "LIVE",     color: "text-[#a3e635]",  dot: "bg-[#a3e635] animate-pulse-dot" },
-    waiting_approval: { label: "PAUSED",   color: "text-yellow-400", dot: "bg-yellow-400" },
+    step_ready:       { label: "PAUSED",   color: "text-blue-400",   dot: "bg-blue-400" },
+    waiting_approval: { label: "REVIEW",   color: "text-yellow-400", dot: "bg-yellow-400" },
     complete:         { label: "COMPLETE", color: "text-[#a3e635]",  dot: "bg-[#a3e635]" },
     failed:           { label: "FAILED",   color: "text-red-400",    dot: "bg-red-400" },
   };
@@ -379,7 +391,21 @@ export default function LiveDemo() {
                 <span className="hidden sm:inline text-[#27272a]">·</span>
                 <span className="hidden sm:inline truncate">{ticket.label}</span>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-3 shrink-0">
+                {/* Inspect mode toggle */}
+                <button
+                  onClick={handleToggleInspect}
+                  className={`text-[9px] flex items-center gap-1 px-2 py-0.5 rounded border transition-colors duration-150 ${
+                    inspectMode
+                      ? "border-blue-900/50 text-blue-400 bg-blue-950/20"
+                      : "border-[rgba(255,255,255,0.07)] text-[#3f3f46] hover:text-[#52525b]"
+                  }`}
+                  style={{ fontFamily: "var(--font-mono)" }}
+                  title={inspectMode ? "Switch to auto mode" : "Step through manually"}
+                >
+                  {inspectMode ? "⏸ inspect" : "⏸ inspect"}
+                </button>
+
                 {isDone && (
                   <button
                     onClick={handleReplay}
@@ -423,6 +449,25 @@ export default function LiveDemo() {
               )}
             </div>
           </div>
+
+          {/* ── Step-ready banner (inspect mode gate) ── */}
+          {workflowState.status === "step_ready" && (
+            <div className="border-b border-blue-900/30 bg-[rgba(59,130,246,0.04)] px-4 py-2.5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+                <span className="text-[10px] text-blue-400 truncate" style={{ fontFamily: "var(--font-mono)" }}>
+                  Step complete — inspect the output, then continue
+                </span>
+              </div>
+              <button
+                onClick={() => engineRef.current?.nextStep()}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-900/30 border border-blue-900/50 text-blue-400 text-[10px] font-medium hover:bg-blue-900/50 transition-colors duration-150"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                ▶ {workflowState.pendingStepName}
+              </button>
+            </div>
+          )}
 
           {/* ── Mobile panel tabs (hidden on desktop) ── */}
           <div className="lg:hidden flex border-b border-[rgba(255,255,255,0.07)] bg-[#0a0a0d]">

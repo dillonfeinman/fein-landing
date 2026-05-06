@@ -20,6 +20,7 @@ export type StepStatus =
 export type WorkflowStatus =
   | "idle"
   | "running"
+  | "step_ready"
   | "waiting_approval"
   | "complete"
   | "failed";
@@ -39,6 +40,7 @@ export interface WorkflowState {
   currentStep: number;
   steps: StepExecution[];
   status: WorkflowStatus;
+  pendingStepName?: string;
 }
 
 export interface FinalResult {
@@ -56,6 +58,10 @@ export interface WorkflowRun extends WorkflowState {
   completedAt?: number;
   traceLog: string[];
   finalResult?: FinalResult;
+}
+
+export interface EngineOptions {
+  inspect?: boolean;
 }
 
 const STEP_NAMES = [
@@ -282,10 +288,13 @@ const SCORE_DATA: Record<ScenarioKey, Record<string, unknown>> = {
 export class WorkflowEngine {
   private run: WorkflowRun;
   private onUpdate: (state: WorkflowState) => void;
+  private options: EngineOptions;
   private resolveApproval?: (action: "approve" | "reject") => void;
+  private resolveStep?: () => void;
 
-  constructor(ticket: Ticket, onUpdate: (state: WorkflowState) => void) {
+  constructor(ticket: Ticket, onUpdate: (state: WorkflowState) => void, options: EngineOptions = {}) {
     this.onUpdate = onUpdate;
+    this.options = options;
     this.run = {
       id: `run_${Date.now()}`,
       input: ticket,
@@ -317,10 +326,12 @@ export class WorkflowEngine {
   approve(): void { this.resolveApproval?.("approve"); }
   reject(): void { this.resolveApproval?.("reject"); }
 
+  nextStep(): void { this.resolveStep?.(); }
+
   cancel(): void {
-    // Silence all future state emissions — old engine keeps running internally
-    // but its updates no longer reach the UI.
     this.onUpdate = () => {};
+    this.resolveStep?.();
+    this.resolveApproval?.("reject");
   }
 
   editAndApprove(modifiedDraft: string): void {
@@ -344,6 +355,7 @@ export class WorkflowEngine {
       currentStep: this.run.currentStep,
       steps: this.run.steps.map((s) => ({ ...s, trace: [...s.trace] })),
       status: this.run.status,
+      pendingStepName: this.run.pendingStepName,
     });
   }
 
@@ -371,14 +383,26 @@ export class WorkflowEngine {
     this.emit();
   }
 
+  // Pause between steps in inspect mode, waiting for nextStep() call
+  private async gateStep(nextStepName: string) {
+    if (!this.options.inspect) return;
+    this.run.pendingStepName = nextStepName;
+    this.run.status = "step_ready";
+    this.emit();
+    await new Promise<void>((resolve) => { this.resolveStep = resolve; });
+    this.run.pendingStepName = undefined;
+    this.run.status = "running";
+    this.emit();
+  }
+
   // ── Steps ───────────────────────────────────────────────────────────────────
 
   private async stepIngest(): Promise<Record<string, unknown>> {
     await this.begin(0);
     this.log(0, "→ received ticket payload");
-    await delay(300);
+    await delay(600);
     this.log(0, "→ normalizing fields and validating schema");
-    await delay(400);
+    await delay(900);
     const wordCount = this.run.input.body.split(" ").length;
     this.log(0, `← parsed: priority=${this.run.input.priority}, words=${wordCount}`);
     const output = { normalized: true, wordCount, priority: this.run.input.priority, ingestedAt: new Date().toISOString() };
@@ -390,12 +414,12 @@ export class WorkflowEngine {
     const s = CLASSIFY_DATA[this.scenario];
     await this.begin(1);
     this.log(1, `→ tokenizing input (${s.tokens} tokens)`);
-    await delay(600);
+    await delay(1000);
     this.log(1, "→ running Gemini Flash 1.5 classification");
-    await delay(900);
+    await delay(1600);
     for (const line of s.logs) {
       this.log(1, line);
-      await delay(200);
+      await delay(500);
     }
     this.finish(1, s.output);
     return s.output;
@@ -405,10 +429,10 @@ export class WorkflowEngine {
     const s = CONTEXT_DATA[this.scenario];
     await this.begin(2);
     this.log(2, `→ querying Pinecone (k=5, ns=${s.ns})`);
-    await delay(500);
+    await delay(800);
     for (const line of s.logs) {
       this.log(2, line);
-      await delay(350);
+      await delay(650);
     }
     this.finish(2, s.output);
     return s.output;
@@ -418,13 +442,13 @@ export class WorkflowEngine {
     const s = GENERATE_DATA[this.scenario];
     await this.begin(3);
     this.log(3, "→ building context window (2847 tokens)");
-    await delay(400);
-    this.log(3, "→ running claude-3-5-sonnet reasoning pass");
-    await delay(1200);
-    this.log(3, s.reasoning);
-    await delay(300);
-    this.log(3, "→ generating response draft");
     await delay(700);
+    this.log(3, "→ running claude-3-5-sonnet reasoning pass");
+    await delay(2200);
+    this.log(3, s.reasoning);
+    await delay(500);
+    this.log(3, "→ generating response draft");
+    await delay(1200);
     this.log(3, `← draft complete (${s.wordCount} words, tone: technical)`);
     const output = { draft: s.draft, model: "claude-3-5-sonnet", wordCount: s.wordCount, tone: "technical" };
     this.finish(3, output);
@@ -435,11 +459,11 @@ export class WorkflowEngine {
     const output = SCORE_DATA[this.scenario];
     await this.begin(4);
     this.log(4, "→ scoring response quality");
-    await delay(300);
+    await delay(500);
     this.log(4, `← relevance: ${output.relevance}, completeness: ${output.completeness}, tone: ${output.tone}`);
-    await delay(200);
+    await delay(400);
     this.log(4, `← composite confidence: ${output.confidence}`);
-    await delay(200);
+    await delay(400);
     this.log(4, `→ threshold check (>${output.threshold}): PASS`);
     this.finish(4, output);
     return output;
@@ -448,7 +472,7 @@ export class WorkflowEngine {
   private async stepApprove(score: Record<string, unknown>): Promise<Record<string, unknown>> {
     await this.begin(5);
     this.log(5, "→ routing to human approval queue");
-    await delay(300);
+    await delay(500);
     this.log(5, `← draft queued (confidence: ${score.confidence})`);
 
     this.run.status = "waiting_approval";
@@ -460,7 +484,7 @@ export class WorkflowEngine {
     });
 
     this.log(5, `← human action: ${action}`);
-    await delay(400);
+    await delay(500);
 
     if (action === "reject") {
       this.run.steps[5] = { ...this.run.steps[5], status: "failed" };
@@ -470,7 +494,7 @@ export class WorkflowEngine {
     }
 
     this.log(5, "→ dispatching response to customer");
-    await delay(500);
+    await delay(600);
     this.log(5, `← ticket ${this.run.input.id} resolved and closed`);
     this.run.status = "complete";
 
@@ -496,10 +520,15 @@ export class WorkflowEngine {
     this.emit();
     try {
       const ingest   = await this.stepIngest();
+      await this.gateStep("classify");
       const classify = await this.stepClassify(ingest);
+      await this.gateStep("context");
       const context  = await this.stepContext(classify);
+      await this.gateStep("generate");
       const generate = await this.stepGenerate(context);
+      await this.gateStep("score");
       const score    = await this.stepScore(generate);
+      await this.gateStep("approve");
       await this.stepApprove(score);
       return this.run;
     } catch (e) {
