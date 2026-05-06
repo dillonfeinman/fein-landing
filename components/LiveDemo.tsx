@@ -400,32 +400,26 @@ export default function LiveDemo() {
             </div>
 
             {/* Row 2: step chips */}
-            <div className="flex items-center gap-0 px-4 py-1.5 overflow-x-auto min-h-[28px]">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-1.5 min-h-[28px]">
               {activeSteps.length === 0 ? (
                 <span className="text-[9px] text-[#27272a]" style={{ fontFamily: "var(--font-mono)" }}>no steps executed</span>
               ) : (
-                activeSteps.flatMap((step, idx) => {
-                  const chip = (
-                    <div key={step.stepIndex} className="flex items-center gap-1 shrink-0">
-                      <span className={`text-[9px] ${STEP_COLORS[step.stepName] ?? "text-[#52525b]"}`} style={{ fontFamily: "var(--font-mono)" }}>
-                        {step.stepName}
-                      </span>
-                      {step.status === "complete" && step.latencyMs !== undefined ? (
-                        <span className="text-[9px] text-[#3f3f46] tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>· {formatMs(step.latencyMs)}</span>
-                      ) : step.status === "running" ? (
-                        <span className="w-1 h-1 rounded-full bg-[#a3e635] animate-pulse-dot ml-1 shrink-0" />
-                      ) : step.status === "waiting_approval" ? (
-                        <span className="text-[9px] text-yellow-400 ml-1" style={{ fontFamily: "var(--font-mono)" }}>· paused</span>
-                      ) : step.status === "failed" ? (
-                        <span className="text-[9px] text-red-400 ml-1" style={{ fontFamily: "var(--font-mono)" }}>· failed</span>
-                      ) : null}
-                    </div>
-                  );
-                  const sep = idx < activeSteps.length - 1
-                    ? <span key={`sep-${step.stepIndex}`} className="text-[#27272a] text-[9px] mx-2 shrink-0" style={{ fontFamily: "var(--font-mono)" }}>──</span>
-                    : null;
-                  return sep ? [chip, sep] : [chip];
-                })
+                activeSteps.map((step) => (
+                  <div key={step.stepIndex} className="flex items-center gap-1">
+                    <span className={`text-[9px] ${STEP_COLORS[step.stepName] ?? "text-[#52525b]"}`} style={{ fontFamily: "var(--font-mono)" }}>
+                      {step.stepName}
+                    </span>
+                    {step.status === "complete" && step.latencyMs !== undefined ? (
+                      <span className="text-[9px] text-[#3f3f46] tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>· {formatMs(step.latencyMs)}</span>
+                    ) : step.status === "running" ? (
+                      <span className="w-1 h-1 rounded-full bg-[#a3e635] animate-pulse-dot ml-0.5 shrink-0" />
+                    ) : step.status === "waiting_approval" ? (
+                      <span className="text-[9px] text-yellow-400" style={{ fontFamily: "var(--font-mono)" }}>· paused</span>
+                    ) : step.status === "failed" ? (
+                      <span className="text-[9px] text-red-400" style={{ fontFamily: "var(--font-mono)" }}>· failed</span>
+                    ) : null}
+                  </div>
+                ))
               )}
             </div>
           </div>
