@@ -204,7 +204,7 @@ export default function LiveDemo() {
     if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { observer.disconnect(); startEngine(0); } },
-      { threshold: 0.25 }
+      { threshold: 0, rootMargin: "-40% 0px -40% 0px" }
     );
     observer.observe(el);
     return () => observer.disconnect();

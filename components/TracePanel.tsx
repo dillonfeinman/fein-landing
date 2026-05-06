@@ -31,10 +31,12 @@ interface Props {
 }
 
 export default function TracePanel({ entries }: Props) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
   }, [entries.length]);
 
   return (
@@ -54,7 +56,7 @@ export default function TracePanel({ entries }: Props) {
         </span>
       </div>
 
-      <div className="h-44 overflow-y-auto px-4 py-2">
+      <div ref={scrollRef} className="h-44 overflow-y-auto px-4 py-2">
         {entries.length === 0 ? (
           <p
             className="text-[9px] text-[#27272a] py-2"
@@ -69,7 +71,6 @@ export default function TracePanel({ entries }: Props) {
             ))}
           </div>
         )}
-        <div ref={bottomRef} />
       </div>
     </div>
   );
