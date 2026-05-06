@@ -499,29 +499,46 @@ function Field({
   );
 }
 
+const ONBOARDING_STEPS = [
+  {
+    step: "01",
+    title: "Workflow scoped within 48hrs",
+    description:
+      "We map your current process and identify every automation opportunity. You'll receive a written breakdown — no generic advice.",
+  },
+  {
+    step: "02",
+    title: "Deployment-ready design doc",
+    description:
+      "Architecture decision record, config schema, and integration spec tailored to your exact stack. Ready to hand to your engineering team.",
+  },
+  {
+    step: "03",
+    title: "Build, deploy, and hand off",
+    description:
+      "We build and ship the system to your infrastructure with full observability hooks. You own it completely from day one.",
+  },
+];
+
 function SuccessState({ reqId, email }: { reqId: string; email: string }) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
+      {/* Confirmation header */}
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-[rgba(163,230,53,0.12)] border border-[rgba(163,230,53,0.2)] flex items-center justify-center text-[#a3e635] text-sm">
+        <div className="w-8 h-8 rounded-full bg-[rgba(163,230,53,0.12)] border border-[rgba(163,230,53,0.2)] flex items-center justify-center text-[#a3e635] text-sm flex-shrink-0">
           ✓
         </div>
         <div>
-          <div
-            className="text-sm font-semibold text-[#f4f4f5]"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
+          <div className="text-sm font-semibold text-[#f4f4f5]" style={{ fontFamily: "var(--font-display)" }}>
             Request received
           </div>
-          <div
-            className="text-[10px] text-[#52525b]"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
+          <div className="text-[10px] text-[#52525b]" style={{ fontFamily: "var(--font-mono)" }}>
             {reqId} · {email}
           </div>
         </div>
       </div>
 
+      {/* Terminal log */}
       <div className="rounded border border-[rgba(255,255,255,0.07)] bg-[#111114] p-4 space-y-1">
         {[
           `→ request ${reqId} queued for review`,
@@ -531,9 +548,7 @@ function SuccessState({ reqId, email }: { reqId: string; email: string }) {
         ].map((line, i) => (
           <div
             key={i}
-            className={`text-[11px] ${
-              line.startsWith("←") ? "text-[#71717a]" : "text-[#52525b]"
-            }`}
+            className={`text-[11px] ${line.startsWith("←") ? "text-[#71717a]" : "text-[#52525b]"}`}
             style={{ fontFamily: "var(--font-mono)" }}
           >
             {line}
@@ -541,13 +556,37 @@ function SuccessState({ reqId, email }: { reqId: string; email: string }) {
         ))}
       </div>
 
-      <p
-        className="text-sm text-[#52525b] leading-relaxed"
-        style={{ fontFamily: "var(--font-display)" }}
-      >
-        We&apos;ll review your workflow and send a scoping doc with a proposed
-        architecture within 48 hours. No commitment required.
-      </p>
+      {/* What happens next */}
+      <div>
+        <div className="text-[10px] text-[#52525b] uppercase tracking-widest mb-5" style={{ fontFamily: "var(--font-mono)" }}>
+          What happens next
+        </div>
+        <div className="space-y-0">
+          {ONBOARDING_STEPS.map((item, i) => (
+            <div key={item.step} className="flex gap-4">
+              <div className="flex flex-col items-center">
+                <span
+                  className="w-7 h-7 rounded border border-[rgba(255,255,255,0.07)] flex items-center justify-center text-[10px] text-[#52525b] flex-shrink-0"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  {item.step}
+                </span>
+                {i < ONBOARDING_STEPS.length - 1 && (
+                  <div className="w-px flex-1 mt-2 bg-[rgba(255,255,255,0.05)]" />
+                )}
+              </div>
+              <div className="pb-6">
+                <div className="text-sm font-medium text-[#d4d4d8] mb-1" style={{ fontFamily: "var(--font-display)" }}>
+                  {item.title}
+                </div>
+                <p className="text-xs text-[#52525b] leading-relaxed" style={{ fontFamily: "var(--font-display)" }}>
+                  {item.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
