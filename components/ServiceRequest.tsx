@@ -59,7 +59,7 @@ const WHAT_NEXT = [
   },
 ];
 
-const WIZARD_STEPS = [
+const ONBOARDING_STEPS = [
   {
     number: "01",
     heading: "We'll be in touch within 48 hours",
@@ -78,6 +78,12 @@ const WIZARD_STEPS = [
     body: "You get a fully working system, set up on your end. No lock-in, no surprise fees. Once it's built, it's yours — we're just here if you need ongoing support.",
     cta: "Done",
   },
+];
+
+const FORM_STEPS = [
+  { label: "You", heading: "First, who are you?" },
+  { label: "The work", heading: "What do you want off your plate?" },
+  { label: "Details", heading: "Last few details" },
 ];
 
 type FormData = {
@@ -106,22 +112,10 @@ const EMPTY: FormData = {
 
 type Errors = Partial<Record<keyof FormData, string>>;
 
-function validate(data: FormData): Errors {
-  const e: Errors = {};
-  if (!data.name.trim()) e.name = "Required";
-  if (!data.email.trim()) {
-    e.email = "Required";
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-    e.email = "Invalid email";
-  }
-  if (data.workflow.trim().length < 20)
-    e.workflow = "Tell us a bit more (at least 20 characters)";
-  return e;
-}
-
 export default function ServiceRequest() {
   const [form, setForm] = useState<FormData>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
+  const [formStep, setFormStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [reqId] = useState(
     () => `REQ-${String(Math.floor(1000 + Math.random() * 9000))}`
@@ -141,15 +135,44 @@ export default function ServiceRequest() {
     }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const errs = validate(form);
+  function validateStep(step: number): Errors {
+    const e: Errors = {};
+    if (step === 0) {
+      if (!form.name.trim()) e.name = "Required";
+      if (!form.email.trim()) {
+        e.email = "Required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+        e.email = "Invalid email";
+      }
+    }
+    if (step === 1) {
+      if (form.workflow.trim().length < 20)
+        e.workflow = "Tell us a bit more (at least 20 characters)";
+    }
+    return e;
+  }
+
+  function nextStep() {
+    const errs = validateStep(formStep);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
+    setErrors({});
+    setFormStep((s) => s + 1);
+  }
+
+  function prevStep() {
+    setErrors({});
+    setFormStep((s) => s - 1);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setSubmitted(true);
   }
+
+  const isLastStep = formStep === FORM_STEPS.length - 1;
 
   return (
     <section
@@ -174,7 +197,8 @@ export default function ServiceRequest() {
             className="text-[#71717a] mt-3 text-base max-w-lg"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Describe the work you want off your plate. We&apos;ll take it from there.
+            Describe the work you want off your plate. We&apos;ll take it from
+            there.
           </p>
         </div>
 
@@ -192,7 +216,7 @@ export default function ServiceRequest() {
             >
               fein-ai · new-request
             </span>
-            {submitted && (
+            {submitted ? (
               <div className="ml-auto flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#a3e635]" />
                 <span
@@ -202,179 +226,270 @@ export default function ServiceRequest() {
                   submitted
                 </span>
               </div>
+            ) : (
+              <span
+                className="ml-auto text-[10px] text-[#3f3f46]"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                step {formStep + 1} of {FORM_STEPS.length}
+              </span>
             )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] bg-[#0e0e11]">
-            {/* Left: form or wizard */}
-            <div className="p-7 border-b lg:border-b-0 lg:border-r border-[rgba(255,255,255,0.07)]">
+            {/* Left: form wizard or post-submit */}
+            <div className="border-b lg:border-b-0 lg:border-r border-[rgba(255,255,255,0.07)]">
               {submitted ? (
-                <OnboardingWizard reqId={reqId} email={form.email} />
+                <div className="p-7">
+                  <OnboardingWizard reqId={reqId} email={form.email} />
+                </div>
               ) : (
-                <form onSubmit={handleSubmit} noValidate className="space-y-5">
-                  {/* Row: name + email */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Your name" error={errors.name} required>
-                      <input
-                        type="text"
-                        placeholder="Alex Chen"
-                        value={form.name}
-                        onChange={(e) => set("name", e.target.value)}
-                        className={inputCls(!!errors.name)}
-                        style={{ fontFamily: "var(--font-display)" }}
+                <form onSubmit={handleSubmit} noValidate>
+                  {/* Progress bar */}
+                  <div className="flex gap-0">
+                    {FORM_STEPS.map((s, i) => (
+                      <div
+                        key={s.label}
+                        className={`h-0.5 flex-1 transition-all duration-500 ${
+                          i <= formStep
+                            ? "bg-[#a3e635]"
+                            : "bg-[rgba(255,255,255,0.06)]"
+                        }`}
                       />
-                    </Field>
-                    <Field label="Work email" error={errors.email} required>
-                      <input
-                        type="email"
-                        placeholder="alex@company.com"
-                        value={form.email}
-                        onChange={(e) => set("email", e.target.value)}
-                        className={inputCls(!!errors.email)}
-                        style={{ fontFamily: "var(--font-display)" }}
-                      />
-                    </Field>
+                    ))}
                   </div>
 
-                  {/* Row: company + role */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Company">
-                      <input
-                        type="text"
-                        placeholder="Acme Corp"
-                        value={form.company}
-                        onChange={(e) => set("company", e.target.value)}
-                        className={inputCls(false)}
-                        style={{ fontFamily: "var(--font-display)" }}
-                      />
-                    </Field>
-                    <Field label="Your role">
-                      <input
-                        type="text"
-                        placeholder="Operations Manager"
-                        value={form.role}
-                        onChange={(e) => set("role", e.target.value)}
-                        className={inputCls(false)}
-                        style={{ fontFamily: "var(--font-display)" }}
-                      />
-                    </Field>
-                  </div>
-
-                  {/* Workflow description */}
-                  <Field
-                    label="What do you want to automate?"
-                    hint="Describe the manual work you want off your plate"
-                    error={errors.workflow}
-                    required
-                  >
-                    <textarea
-                      rows={5}
-                      placeholder="e.g. We get hundreds of customer emails every day. Someone on our team reads each one, figures out who to forward it to, and writes a reply. It takes hours — we want this done automatically."
-                      value={form.workflow}
-                      onChange={(e) => set("workflow", e.target.value)}
-                      className={`${inputCls(!!errors.workflow)} resize-none`}
-                      style={{ fontFamily: "var(--font-display)" }}
-                    />
-                  </Field>
-
-                  {/* Row: system type + volume + timeline */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <Field label="Type of work">
-                      <select
-                        value={form.systemType}
-                        onChange={(e) => set("systemType", e.target.value)}
-                        className={`${inputCls(false)} appearance-none`}
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        <option value="">Select…</option>
-                        {SYSTEM_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                    <Field label="How much volume?">
-                      <select
-                        value={form.volume}
-                        onChange={(e) => set("volume", e.target.value)}
-                        className={`${inputCls(false)} appearance-none`}
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        <option value="">Select…</option>
-                        {VOLUMES.map((v) => (
-                          <option key={v} value={v}>
-                            {v}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                    <Field label="When do you need it?">
-                      <select
-                        value={form.timeline}
-                        onChange={(e) => set("timeline", e.target.value)}
-                        className={`${inputCls(false)} appearance-none`}
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        <option value="">Select…</option>
-                        {TIMELINES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                  </div>
-
-                  {/* Tools */}
-                  <div>
-                    <div
-                      className="text-[10px] text-[#52525b] uppercase tracking-widest mb-2"
-                      style={{ fontFamily: "var(--font-mono)" }}
-                    >
-                      Tools you already use{" "}
-                      <span className="text-[#3f3f46] normal-case tracking-normal">
-                        (pick any that apply)
-                      </span>
+                  {/* Step heading */}
+                  <div className="px-7 pt-7 pb-5">
+                    <div className="flex items-center gap-3 mb-1">
+                      {FORM_STEPS.map((s, i) => (
+                        <span
+                          key={s.label}
+                          className={`text-[10px] uppercase tracking-widest transition-colors duration-200 ${
+                            i === formStep
+                              ? "text-[#a3e635]"
+                              : i < formStep
+                              ? "text-[#3f3f46]"
+                              : "text-[#27272a]"
+                          }`}
+                          style={{ fontFamily: "var(--font-mono)" }}
+                        >
+                          {s.label}
+                          {i < FORM_STEPS.length - 1 && (
+                            <span className="ml-3 text-[#27272a]">·</span>
+                          )}
+                        </span>
+                      ))}
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {TOOLS.map((tool) => {
-                        const active = form.tools.includes(tool);
-                        return (
-                          <button
-                            key={tool}
-                            type="button"
-                            onClick={() => toggleTool(tool)}
-                            className={`px-2.5 py-1 rounded text-[11px] border transition-all duration-150 ${
-                              active
-                                ? "bg-[rgba(163,230,53,0.1)] border-[rgba(163,230,53,0.3)] text-[#a3e635]"
-                                : "bg-[#111114] border-[rgba(255,255,255,0.07)] text-[#52525b] hover:border-[rgba(255,255,255,0.12)] hover:text-[#71717a]"
-                            }`}
+                    <h3
+                      className="text-xl font-bold text-[#f4f4f5]"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {FORM_STEPS[formStep].heading}
+                    </h3>
+                  </div>
+
+                  {/* Step fields */}
+                  <div className="px-7 pb-7 space-y-5">
+                    {formStep === 0 && (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <Field label="Your name" error={errors.name} required>
+                            <input
+                              type="text"
+                              placeholder="Alex Chen"
+                              value={form.name}
+                              onChange={(e) => set("name", e.target.value)}
+                              className={inputCls(!!errors.name)}
+                              style={{ fontFamily: "var(--font-display)" }}
+                              autoFocus
+                            />
+                          </Field>
+                          <Field
+                            label="Work email"
+                            error={errors.email}
+                            required
+                          >
+                            <input
+                              type="email"
+                              placeholder="alex@company.com"
+                              value={form.email}
+                              onChange={(e) => set("email", e.target.value)}
+                              className={inputCls(!!errors.email)}
+                              style={{ fontFamily: "var(--font-display)" }}
+                            />
+                          </Field>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <Field label="Company">
+                            <input
+                              type="text"
+                              placeholder="Acme Corp"
+                              value={form.company}
+                              onChange={(e) => set("company", e.target.value)}
+                              className={inputCls(false)}
+                              style={{ fontFamily: "var(--font-display)" }}
+                            />
+                          </Field>
+                          <Field label="Your role">
+                            <input
+                              type="text"
+                              placeholder="Operations Manager"
+                              value={form.role}
+                              onChange={(e) => set("role", e.target.value)}
+                              className={inputCls(false)}
+                              style={{ fontFamily: "var(--font-display)" }}
+                            />
+                          </Field>
+                        </div>
+                      </>
+                    )}
+
+                    {formStep === 1 && (
+                      <>
+                        <Field
+                          label="Describe the work"
+                          hint="What's repetitive, slow, or manual?"
+                          error={errors.workflow}
+                          required
+                        >
+                          <textarea
+                            rows={6}
+                            placeholder="e.g. We get hundreds of customer emails every day. Someone on our team reads each one, figures out who to forward it to, and writes a reply. It takes hours — we want this done automatically."
+                            value={form.workflow}
+                            onChange={(e) => set("workflow", e.target.value)}
+                            className={`${inputCls(!!errors.workflow)} resize-none`}
+                            style={{ fontFamily: "var(--font-display)" }}
+                            autoFocus
+                          />
+                        </Field>
+                        <Field label="What kind of work is it?">
+                          <select
+                            value={form.systemType}
+                            onChange={(e) => set("systemType", e.target.value)}
+                            className={`${inputCls(false)} appearance-none`}
+                            style={{ fontFamily: "var(--font-display)" }}
+                          >
+                            <option value="">Pick the closest match…</option>
+                            {SYSTEM_TYPES.map((t) => (
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                      </>
+                    )}
+
+                    {formStep === 2 && (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <Field label="How often does this happen?">
+                            <select
+                              value={form.volume}
+                              onChange={(e) => set("volume", e.target.value)}
+                              className={`${inputCls(false)} appearance-none`}
+                              style={{ fontFamily: "var(--font-display)" }}
+                            >
+                              <option value="">Select…</option>
+                              {VOLUMES.map((v) => (
+                                <option key={v} value={v}>
+                                  {v}
+                                </option>
+                              ))}
+                            </select>
+                          </Field>
+                          <Field label="When do you need it?">
+                            <select
+                              value={form.timeline}
+                              onChange={(e) => set("timeline", e.target.value)}
+                              className={`${inputCls(false)} appearance-none`}
+                              style={{ fontFamily: "var(--font-display)" }}
+                            >
+                              <option value="">Select…</option>
+                              {TIMELINES.map((t) => (
+                                <option key={t} value={t}>
+                                  {t}
+                                </option>
+                              ))}
+                            </select>
+                          </Field>
+                        </div>
+                        <div>
+                          <div
+                            className="text-[10px] text-[#52525b] uppercase tracking-widest mb-2"
                             style={{ fontFamily: "var(--font-mono)" }}
                           >
-                            {tool}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                            Tools you already use{" "}
+                            <span className="text-[#3f3f46] normal-case tracking-normal">
+                              (pick any that apply)
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {TOOLS.map((tool) => {
+                              const active = form.tools.includes(tool);
+                              return (
+                                <button
+                                  key={tool}
+                                  type="button"
+                                  onClick={() => toggleTool(tool)}
+                                  className={`px-2.5 py-1 rounded text-[11px] border transition-all duration-150 ${
+                                    active
+                                      ? "bg-[rgba(163,230,53,0.1)] border-[rgba(163,230,53,0.3)] text-[#a3e635]"
+                                      : "bg-[#111114] border-[rgba(255,255,255,0.07)] text-[#52525b] hover:border-[rgba(255,255,255,0.12)] hover:text-[#71717a]"
+                                  }`}
+                                  style={{ fontFamily: "var(--font-mono)" }}
+                                >
+                                  {tool}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
 
-                  {/* Submit */}
-                  <div className="flex items-center gap-4 pt-1">
-                    <button
-                      type="submit"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-[#a3e635] text-[#0c0c0e] text-sm font-semibold hover:bg-[#bef264] transition-colors duration-150"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      Send Request
-                      <span>→</span>
-                    </button>
-                    <span
-                      className="text-[10px] text-[#3f3f46]"
-                      style={{ fontFamily: "var(--font-mono)" }}
-                    >
-                      No commitment · We reply within 48hrs
-                    </span>
+                    {/* Navigation */}
+                    <div className="flex items-center justify-between pt-2">
+                      {formStep > 0 ? (
+                        <button
+                          type="button"
+                          onClick={prevStep}
+                          className="text-xs text-[#52525b] hover:text-[#71717a] transition-colors"
+                          style={{ fontFamily: "var(--font-mono)" }}
+                        >
+                          ← Back
+                        </button>
+                      ) : (
+                        <div />
+                      )}
+                      {isLastStep ? (
+                        <div className="flex items-center gap-4">
+                          <span
+                            className="text-[10px] text-[#3f3f46]"
+                            style={{ fontFamily: "var(--font-mono)" }}
+                          >
+                            No commitment · reply within 48hrs
+                          </span>
+                          <button
+                            type="submit"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-[#a3e635] text-[#0c0c0e] text-sm font-semibold hover:bg-[#bef264] transition-colors duration-150"
+                            style={{ fontFamily: "var(--font-display)" }}
+                          >
+                            Send Request →
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={nextStep}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-[#a3e635] text-[#0c0c0e] text-sm font-semibold hover:bg-[#bef264] transition-colors duration-150"
+                          style={{ fontFamily: "var(--font-display)" }}
+                        >
+                          Continue →
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </form>
               )}
@@ -455,12 +570,12 @@ export default function ServiceRequest() {
   );
 }
 
-// ── Onboarding wizard ──────────────────────────────────────────────────────────
+// ── Post-submit onboarding wizard ──────────────────────────────────────────────
 
 function OnboardingWizard({ reqId, email }: { reqId: string; email: string }) {
   const [step, setStep] = useState(0);
-  const current = WIZARD_STEPS[step];
-  const isLast = step === WIZARD_STEPS.length - 1;
+  const current = ONBOARDING_STEPS[step];
+  const isLast = step === ONBOARDING_STEPS.length - 1;
 
   function advance() {
     if (isLast) {
@@ -495,7 +610,7 @@ function OnboardingWizard({ reqId, email }: { reqId: string; email: string }) {
 
       {/* Progress bar */}
       <div className="flex items-center gap-1.5">
-        {WIZARD_STEPS.map((_, i) => (
+        {ONBOARDING_STEPS.map((_, i) => (
           <div
             key={i}
             className={`h-0.5 flex-1 rounded transition-all duration-500 ${
@@ -581,7 +696,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <label
           className="text-[10px] text-[#52525b] uppercase tracking-widest"
           style={{ fontFamily: "var(--font-mono)" }}
