@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "export",
-  basePath: "/fein-ai-solutions",
+  basePath: "/fein-landing",
   images: {
     unoptimized: true,
   },
