@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+// ── Constants ──────────────────────────────────────────────────────────────────
+
 const SYSTEM_TYPES = [
   "Customer Support",
   "Lead Qualification",
@@ -81,10 +83,18 @@ const ONBOARDING_STEPS = [
 ];
 
 const FORM_STEPS = [
-  { label: "You", heading: "First, who are you?" },
   { label: "The work", heading: "What do you want off your plate?" },
-  { label: "Details", heading: "Last few details" },
+  { label: "Your process", heading: "How does it work today?" },
+  { label: "About you", heading: "Last — who are you?" },
 ];
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+type FlowNode = {
+  id: string;
+  label: string;
+  note: string;
+};
 
 type FormData = {
   name: string;
@@ -96,6 +106,7 @@ type FormData = {
   volume: string;
   timeline: string;
   tools: string[];
+  flowNodes: FlowNode[];
 };
 
 const EMPTY: FormData = {
@@ -108,9 +119,16 @@ const EMPTY: FormData = {
   volume: "",
   timeline: "",
   tools: [],
+  flowNodes: [],
 };
 
 type Errors = Partial<Record<keyof FormData, string>>;
+
+function makeNodeId() {
+  return `node-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function ServiceRequest() {
   const [form, setForm] = useState<FormData>(EMPTY);
@@ -135,19 +153,23 @@ export default function ServiceRequest() {
     }));
   }
 
+  function setFlowNodes(nodes: FlowNode[]) {
+    setForm((prev) => ({ ...prev, flowNodes: nodes }));
+  }
+
   function validateStep(step: number): Errors {
     const e: Errors = {};
     if (step === 0) {
+      if (form.workflow.trim().length < 20)
+        e.workflow = "Tell us a bit more (at least 20 characters)";
+    }
+    if (step === 2) {
       if (!form.name.trim()) e.name = "Required";
       if (!form.email.trim()) {
         e.email = "Required";
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
         e.email = "Invalid email";
       }
-    }
-    if (step === 1) {
-      if (form.workflow.trim().length < 20)
-        e.workflow = "Tell us a bit more (at least 20 characters)";
     }
     return e;
   }
@@ -169,6 +191,11 @@ export default function ServiceRequest() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const errs = validateStep(formStep);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
     setSubmitted(true);
   }
 
@@ -259,24 +286,25 @@ export default function ServiceRequest() {
                     ))}
                   </div>
 
-                  {/* Step heading */}
+                  {/* Step heading + breadcrumb */}
                   <div className="px-7 pt-7 pb-5">
-                    <div className="flex items-center gap-3 mb-1">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       {FORM_STEPS.map((s, i) => (
-                        <span
-                          key={s.label}
-                          className={`text-[10px] uppercase tracking-widest transition-colors duration-200 ${
-                            i === formStep
-                              ? "text-[#a3e635]"
-                              : i < formStep
-                              ? "text-[#3f3f46]"
-                              : "text-[#27272a]"
-                          }`}
-                          style={{ fontFamily: "var(--font-mono)" }}
-                        >
-                          {s.label}
+                        <span key={s.label} className="flex items-center gap-2">
+                          <span
+                            className={`text-[10px] uppercase tracking-widest transition-colors duration-200 ${
+                              i === formStep
+                                ? "text-[#a3e635]"
+                                : i < formStep
+                                ? "text-[#3f3f46]"
+                                : "text-[#27272a]"
+                            }`}
+                            style={{ fontFamily: "var(--font-mono)" }}
+                          >
+                            {s.label}
+                          </span>
                           {i < FORM_STEPS.length - 1 && (
-                            <span className="ml-3 text-[#27272a]">·</span>
+                            <span className="text-[#27272a] text-[10px]">·</span>
                           )}
                         </span>
                       ))}
@@ -291,7 +319,53 @@ export default function ServiceRequest() {
 
                   {/* Step fields */}
                   <div className="px-7 pb-7 space-y-5">
+                    {/* ── Step 0: the work ── */}
                     {formStep === 0 && (
+                      <>
+                        <Field
+                          label="Describe the work"
+                          hint="What's repetitive, slow, or manual?"
+                          error={errors.workflow}
+                          required
+                        >
+                          <textarea
+                            rows={6}
+                            placeholder="e.g. We get hundreds of customer emails every day. Someone on our team reads each one, figures out who to forward it to, and writes a reply. It takes hours — we want this done automatically."
+                            value={form.workflow}
+                            onChange={(e) => set("workflow", e.target.value)}
+                            className={`${inputCls(!!errors.workflow)} resize-none`}
+                            style={{ fontFamily: "var(--font-display)" }}
+                            autoFocus
+                          />
+                        </Field>
+                        <Field label="What kind of work is it?">
+                          <select
+                            value={form.systemType}
+                            onChange={(e) => set("systemType", e.target.value)}
+                            className={`${inputCls(false)} appearance-none`}
+                            style={{ fontFamily: "var(--font-display)" }}
+                          >
+                            <option value="">Pick the closest match…</option>
+                            {SYSTEM_TYPES.map((t) => (
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                      </>
+                    )}
+
+                    {/* ── Step 1: flow diagram ── */}
+                    {formStep === 1 && (
+                      <FlowBuilder
+                        nodes={form.flowNodes}
+                        onChange={setFlowNodes}
+                      />
+                    )}
+
+                    {/* ── Step 2: about you ── */}
+                    {formStep === 2 && (
                       <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <Field label="Your name" error={errors.name} required>
@@ -342,47 +416,6 @@ export default function ServiceRequest() {
                             />
                           </Field>
                         </div>
-                      </>
-                    )}
-
-                    {formStep === 1 && (
-                      <>
-                        <Field
-                          label="Describe the work"
-                          hint="What's repetitive, slow, or manual?"
-                          error={errors.workflow}
-                          required
-                        >
-                          <textarea
-                            rows={6}
-                            placeholder="e.g. We get hundreds of customer emails every day. Someone on our team reads each one, figures out who to forward it to, and writes a reply. It takes hours — we want this done automatically."
-                            value={form.workflow}
-                            onChange={(e) => set("workflow", e.target.value)}
-                            className={`${inputCls(!!errors.workflow)} resize-none`}
-                            style={{ fontFamily: "var(--font-display)" }}
-                            autoFocus
-                          />
-                        </Field>
-                        <Field label="What kind of work is it?">
-                          <select
-                            value={form.systemType}
-                            onChange={(e) => set("systemType", e.target.value)}
-                            className={`${inputCls(false)} appearance-none`}
-                            style={{ fontFamily: "var(--font-display)" }}
-                          >
-                            <option value="">Pick the closest match…</option>
-                            {SYSTEM_TYPES.map((t) => (
-                              <option key={t} value={t}>
-                                {t}
-                              </option>
-                            ))}
-                          </select>
-                        </Field>
-                      </>
-                    )}
-
-                    {formStep === 2 && (
-                      <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <Field label="How often does this happen?">
                             <select
@@ -495,7 +528,7 @@ export default function ServiceRequest() {
               )}
             </div>
 
-            {/* Right: what happens next */}
+            {/* Right sidebar */}
             <div className="p-7 bg-[#0a0a0d]">
               <div
                 className="text-[10px] text-[#52525b] uppercase tracking-widest mb-6"
@@ -503,7 +536,6 @@ export default function ServiceRequest() {
               >
                 What happens next
               </div>
-
               <div className="space-y-6">
                 {WHAT_NEXT.map((item, i) => (
                   <div key={item.step} className="flex gap-4">
@@ -535,7 +567,6 @@ export default function ServiceRequest() {
                   </div>
                 ))}
               </div>
-
               <div className="mt-2 pt-6 border-t border-[rgba(255,255,255,0.05)] space-y-3">
                 {[
                   { label: "Response time", value: "< 48 hours" },
@@ -570,6 +601,146 @@ export default function ServiceRequest() {
   );
 }
 
+// ── Flow diagram builder ───────────────────────────────────────────────────────
+
+const MAX_NODES = 5;
+
+function FlowBuilder({
+  nodes,
+  onChange,
+}: {
+  nodes: FlowNode[];
+  onChange: (nodes: FlowNode[]) => void;
+}) {
+  function addNode() {
+    if (nodes.length >= MAX_NODES) return;
+    onChange([...nodes, { id: makeNodeId(), label: "", note: "" }]);
+  }
+
+  function updateNode(id: string, field: "label" | "note", value: string) {
+    onChange(nodes.map((n) => (n.id === id ? { ...n, [field]: value } : n)));
+  }
+
+  function removeNode(id: string) {
+    onChange(nodes.filter((n) => n.id !== id));
+  }
+
+  return (
+    <div className="space-y-4">
+      <p
+        className="text-sm text-[#71717a] leading-relaxed"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        Add up to {MAX_NODES} steps that describe how this work gets done
+        today — even roughly. This helps us understand exactly what to
+        replace.
+      </p>
+
+      {nodes.length === 0 ? (
+        /* Empty state */
+        <button
+          type="button"
+          onClick={addNode}
+          className="w-full flex flex-col items-center gap-3 py-10 rounded-lg border border-dashed border-[rgba(255,255,255,0.08)] text-[#3f3f46] hover:border-[rgba(163,230,53,0.2)] hover:text-[#52525b] transition-all duration-200 group"
+        >
+          <span className="text-2xl group-hover:text-[#a3e635] transition-colors duration-200">+</span>
+          <span className="text-xs" style={{ fontFamily: "var(--font-mono)" }}>
+            Add your first step
+          </span>
+        </button>
+      ) : (
+        /* Flow row */
+        <div className="overflow-x-auto pb-2 -mx-1 px-1">
+          <div className="flex items-stretch gap-0 min-w-max">
+            {nodes.map((node, i) => (
+              <div key={node.id} className="flex items-center">
+                {/* Node card */}
+                <div className="relative w-44 flex-shrink-0 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#111114] p-3 self-stretch flex flex-col gap-2">
+                  {/* Delete */}
+                  <button
+                    type="button"
+                    onClick={() => removeNode(node.id)}
+                    className="absolute top-2 right-2 w-4 h-4 flex items-center justify-center text-[#3f3f46] hover:text-[#a1a1aa] transition-colors text-xs leading-none"
+                    aria-label="Remove step"
+                  >
+                    ×
+                  </button>
+
+                  {/* Step number */}
+                  <div
+                    className="text-[9px] text-[#3f3f46] uppercase tracking-widest"
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
+                    Step {i + 1}
+                  </div>
+
+                  {/* Label */}
+                  <input
+                    type="text"
+                    placeholder="e.g. Receive email"
+                    value={node.label}
+                    onChange={(e) => updateNode(node.id, "label", e.target.value)}
+                    maxLength={40}
+                    className="w-full bg-transparent text-xs text-[#d4d4d8] outline-none placeholder:text-[#3f3f46] border-b border-[rgba(255,255,255,0.06)] pb-1.5 font-medium"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  />
+
+                  {/* Note */}
+                  <input
+                    type="text"
+                    placeholder="Who does it? How?"
+                    value={node.note}
+                    onChange={(e) => updateNode(node.id, "note", e.target.value)}
+                    maxLength={80}
+                    className="w-full bg-transparent text-[10px] text-[#52525b] outline-none placeholder:text-[#27272a]"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  />
+                </div>
+
+                {/* Arrow or Add button */}
+                {i < nodes.length - 1 ? (
+                  <div className="flex-shrink-0 w-8 flex items-center justify-center text-[#3f3f46] text-sm select-none">
+                    →
+                  </div>
+                ) : nodes.length < MAX_NODES ? (
+                  <button
+                    type="button"
+                    onClick={addNode}
+                    className="flex-shrink-0 ml-2 w-8 h-8 rounded border border-dashed border-[rgba(255,255,255,0.08)] flex items-center justify-center text-[#3f3f46] hover:border-[rgba(163,230,53,0.25)] hover:text-[#a3e635] transition-all duration-150 text-sm self-center"
+                    title="Add step"
+                  >
+                    +
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Footer hint */}
+      <div className="flex items-center justify-between">
+        <p
+          className="text-[10px] text-[#27272a]"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          {nodes.length > 0 && nodes.length < MAX_NODES
+            ? `${MAX_NODES - nodes.length} step${MAX_NODES - nodes.length === 1 ? "" : "s"} remaining`
+            : nodes.length === MAX_NODES
+            ? "Maximum steps reached"
+            : ""}
+        </p>
+        <span
+          className="text-[10px] text-[#27272a]"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          optional — skip if you prefer
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Post-submit onboarding wizard ──────────────────────────────────────────────
 
 function OnboardingWizard({ reqId, email }: { reqId: string; email: string }) {
@@ -587,7 +758,6 @@ function OnboardingWizard({ reqId, email }: { reqId: string; email: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Confirmation banner */}
       <div className="flex items-center gap-3 p-3 rounded border border-[rgba(163,230,53,0.15)] bg-[rgba(163,230,53,0.05)]">
         <div className="w-6 h-6 rounded-full bg-[rgba(163,230,53,0.15)] flex items-center justify-center text-[#a3e635] text-xs flex-shrink-0">
           ✓
@@ -608,7 +778,6 @@ function OnboardingWizard({ reqId, email }: { reqId: string; email: string }) {
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="flex items-center gap-1.5">
         {ONBOARDING_STEPS.map((_, i) => (
           <div
@@ -620,7 +789,6 @@ function OnboardingWizard({ reqId, email }: { reqId: string; email: string }) {
         ))}
       </div>
 
-      {/* Step content */}
       <div className="flex flex-col gap-4 min-h-[180px]">
         <span
           className="text-5xl font-bold text-[#a3e635]"
@@ -642,7 +810,6 @@ function OnboardingWizard({ reqId, email }: { reqId: string; email: string }) {
         </p>
       </div>
 
-      {/* Navigation */}
       <div className="flex items-center justify-between pt-2 border-t border-[rgba(255,255,255,0.05)]">
         {step > 0 ? (
           <button
