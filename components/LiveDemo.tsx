@@ -183,6 +183,7 @@ export default function LiveDemo() {
   const [traceEntries, setTraceEntries]   = useState<TraceEntry[]>([]);
   const [mobilePanel, setMobilePanel]     = useState<MobilePanel>("output");
   const [inspectMode, setInspectMode]     = useState(false);
+  const [hoveredStep, setHoveredStep]     = useState<number | null>(null);
 
   // ── Engine management ────────────────────────────────────────────────────────
 
@@ -425,49 +426,44 @@ export default function LiveDemo() {
               </div>
             </div>
 
-            {/* Row 2: step chips */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-1.5 min-h-[28px]">
+            {/* Row 2: step chips — hoverable to inspect each step */}
+            <div className="flex flex-wrap items-center gap-x-1 gap-y-1 px-4 py-1.5 min-h-[28px]">
               {activeSteps.length === 0 ? (
                 <span className="text-[9px] text-[#27272a]" style={{ fontFamily: "var(--font-mono)" }}>no steps executed</span>
               ) : (
-                activeSteps.map((step) => (
-                  <div key={step.stepIndex} className="flex items-center gap-1">
-                    <span className={`text-[9px] ${STEP_COLORS[step.stepName] ?? "text-[#52525b]"}`} style={{ fontFamily: "var(--font-mono)" }}>
-                      {step.stepName}
-                    </span>
-                    {step.status === "complete" && step.latencyMs !== undefined ? (
-                      <span className="text-[9px] text-[#3f3f46] tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>· {formatMs(step.latencyMs)}</span>
-                    ) : step.status === "running" ? (
-                      <span className="w-1 h-1 rounded-full bg-[#a3e635] animate-pulse-dot ml-0.5 shrink-0" />
-                    ) : step.status === "waiting_approval" ? (
-                      <span className="text-[9px] text-yellow-400" style={{ fontFamily: "var(--font-mono)" }}>· paused</span>
-                    ) : step.status === "failed" ? (
-                      <span className="text-[9px] text-red-400" style={{ fontFamily: "var(--font-mono)" }}>· failed</span>
-                    ) : null}
-                  </div>
-                ))
+                activeSteps.map((step, i) => {
+                  const isHovered = hoveredStep === step.stepIndex;
+                  const isComplete = step.status === "complete";
+                  return (
+                    <div
+                      key={step.stepIndex}
+                      className={`flex items-center gap-1 rounded px-2 py-0.5 transition-all duration-150 ${
+                        isComplete
+                          ? "cursor-pointer hover:bg-[rgba(255,255,255,0.04)]"
+                          : ""
+                      } ${isHovered ? "bg-[rgba(255,255,255,0.06)] ring-1 ring-[rgba(255,255,255,0.08)]" : ""}`}
+                      onMouseEnter={() => isComplete ? setHoveredStep(step.stepIndex) : undefined}
+                      onMouseLeave={() => setHoveredStep(null)}
+                    >
+                      {i > 0 && <span className="text-[8px] text-[#27272a] mr-1">·</span>}
+                      <span className={`text-[9px] ${STEP_COLORS[step.stepName] ?? "text-[#52525b]"} ${isHovered ? "opacity-100" : ""}`} style={{ fontFamily: "var(--font-mono)" }}>
+                        {step.stepName}
+                      </span>
+                      {step.status === "complete" && step.latencyMs !== undefined ? (
+                        <span className="text-[9px] text-[#3f3f46] tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>· {formatMs(step.latencyMs)}</span>
+                      ) : step.status === "running" ? (
+                        <span className="w-1 h-1 rounded-full bg-[#a3e635] animate-pulse-dot ml-0.5 shrink-0" />
+                      ) : step.status === "waiting_approval" ? (
+                        <span className="text-[9px] text-yellow-400" style={{ fontFamily: "var(--font-mono)" }}>· paused</span>
+                      ) : step.status === "failed" ? (
+                        <span className="text-[9px] text-red-400" style={{ fontFamily: "var(--font-mono)" }}>· failed</span>
+                      ) : null}
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
-
-          {/* ── Step-ready banner (inspect mode gate) ── */}
-          {workflowState.status === "step_ready" && (
-            <div className="border-b border-blue-900/30 bg-[rgba(59,130,246,0.04)] px-4 py-2.5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
-                <span className="text-[10px] text-blue-400 truncate" style={{ fontFamily: "var(--font-mono)" }}>
-                  Step complete — inspect the output, then continue
-                </span>
-              </div>
-              <button
-                onClick={() => engineRef.current?.nextStep()}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-900/30 border border-blue-900/50 text-blue-400 text-[10px] font-medium hover:bg-blue-900/50 transition-colors duration-150"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                ▶ {workflowState.pendingStepName}
-              </button>
-            </div>
-          )}
 
           {/* ── Mobile panel tabs (hidden on desktop) ── */}
           <div className="lg:hidden flex border-b border-[rgba(255,255,255,0.07)] bg-[#0a0a0d]">
@@ -594,9 +590,22 @@ export default function LiveDemo() {
               <PipelineAnimation workflowState={workflowState} nodes={NODES_BY_MODE[demoMode]} />
             </div>
 
-            {/* Right: output / approval */}
+            {/* Right: output / approval / inspection */}
             <div className={`p-5 flex-col ${mobilePanel === "output" ? "flex" : "hidden lg:flex"}`}>
-              {workflowState.status === "waiting_approval" ? (
+              {hoveredStep !== null && workflowState.steps[hoveredStep]?.status !== "pending" ? (
+                <StepInspectView
+                  step={workflowState.steps[hoveredStep]}
+                  continueLabel={workflowState.status === "step_ready" ? workflowState.pendingStepName : undefined}
+                  onContinue={workflowState.status === "step_ready" ? () => { setHoveredStep(null); engineRef.current?.nextStep(); } : undefined}
+                />
+              ) : workflowState.status === "step_ready" ? (
+                <StepGateView
+                  pendingStepName={workflowState.pendingStepName}
+                  completedSteps={workflowState.steps.filter(s => s.status === "complete")}
+                  onContinue={() => engineRef.current?.nextStep()}
+                  onHoverStep={setHoveredStep}
+                />
+              ) : workflowState.status === "waiting_approval" ? (
                 <ApprovalGate draft={draft} confidence={confidence} mode={demoMode} onApprove={handleApprove} onReject={handleReject} onEditAndApprove={handleEditAndApprove} />
               ) : workflowState.status === "complete" ? (
                 <FinalResult draft={draft} confidence={confidence} edited={edited} mode={demoMode} onReplay={handleReplay} />
@@ -613,6 +622,130 @@ export default function LiveDemo() {
         </div>
       </div>
     </section>
+  );
+}
+
+// ── Step inspect view (hover) ──────────────────────────────────────────────────
+
+function StepInspectView({
+  step,
+  continueLabel,
+  onContinue,
+}: {
+  step: import("@/lib/workflowEngine").StepExecution;
+  continueLabel?: string;
+  onContinue?: () => void;
+}) {
+  const stepColor = ({ ingest: "text-blue-400", classify: "text-purple-400", context: "text-cyan-500", generate: "text-[#a3e635]", score: "text-orange-400", approve: "text-yellow-400" } as Record<string, string>)[step.stepName] ?? "text-[#52525b]";
+
+  return (
+    <div className="flex flex-col gap-3 h-full">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className={`text-[10px] uppercase tracking-widest font-medium ${stepColor}`} style={{ fontFamily: "var(--font-mono)" }}>
+            {step.stepName}
+          </span>
+          <span className="text-[9px] text-[#3f3f46]" style={{ fontFamily: "var(--font-mono)" }}>
+            {step.latencyMs !== undefined ? `${step.latencyMs}ms` : step.status}
+          </span>
+        </div>
+        {onContinue && (
+          <button
+            onClick={onContinue}
+            className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#a3e635] text-[#0c0c0e] text-[10px] font-semibold hover:bg-[#bef264] transition-colors"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            ▶ {continueLabel ?? "continue"}
+          </button>
+        )}
+      </div>
+
+      {/* Trace */}
+      <div className="rounded border border-[rgba(255,255,255,0.07)] bg-[#111114] p-3 overflow-y-auto max-h-44 space-y-0.5">
+        {step.trace.length === 0 ? (
+          <span className="text-[10px] text-[#3f3f46]" style={{ fontFamily: "var(--font-mono)" }}>no trace</span>
+        ) : (
+          step.trace.map((line, i) => (
+            <div key={i} className={`text-[10px] leading-relaxed ${line.startsWith("←") ? "text-[#71717a]" : "text-[#52525b]"}`} style={{ fontFamily: "var(--font-mono)" }}>
+              {line}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Output KV (skip draft) */}
+      {step.output && (
+        <div className="space-y-px">
+          {Object.entries(step.output)
+            .filter(([k]) => k !== "draft" && k !== "ingestedAt" && k !== "dispatchedAt" && k !== "chargeIds")
+            .slice(0, 8)
+            .map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between gap-4 px-2 py-1 rounded hover:bg-[rgba(255,255,255,0.02)]">
+                <span className="text-[9px] text-[#3f3f46] shrink-0" style={{ fontFamily: "var(--font-mono)" }}>{k}</span>
+                <span className="text-[9px] text-[#71717a] tabular-nums truncate text-right" style={{ fontFamily: "var(--font-mono)" }}>{String(v)}</span>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Step gate view (inspect mode pause) ───────────────────────────────────────
+
+function StepGateView({
+  pendingStepName,
+  completedSteps,
+  onContinue,
+  onHoverStep,
+}: {
+  pendingStepName?: string;
+  completedSteps: import("@/lib/workflowEngine").StepExecution[];
+  onContinue: () => void;
+  onHoverStep: (idx: number | null) => void;
+}) {
+  const stepColor = ({ ingest: "text-blue-400", classify: "text-purple-400", context: "text-cyan-500", generate: "text-[#a3e635]", score: "text-orange-400", approve: "text-yellow-400" } as Record<string, string>);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center gap-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#a3e635]" />
+        <span className="text-[10px] text-[#a3e635] uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>
+          Step complete
+        </span>
+      </div>
+
+      <p className="text-xs text-[#52525b] leading-relaxed" style={{ fontFamily: "var(--font-display)" }}>
+        Hover any completed step above to inspect its output, then continue to the next step.
+      </p>
+
+      {/* Completed steps as clickable list */}
+      <div className="space-y-1">
+        {completedSteps.map((s) => (
+          <button
+            key={s.stepIndex}
+            onMouseEnter={() => onHoverStep(s.stepIndex)}
+            onMouseLeave={() => onHoverStep(null)}
+            className="w-full flex items-center justify-between px-3 py-2 rounded border border-[rgba(255,255,255,0.05)] bg-[#111114] hover:border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.03)] transition-all duration-150 group"
+          >
+            <span className={`text-[10px] ${stepColor[s.stepName] ?? "text-[#52525b]"}`} style={{ fontFamily: "var(--font-mono)" }}>
+              {s.stepName}
+            </span>
+            <span className="text-[9px] text-[#3f3f46] group-hover:text-[#52525b] transition-colors" style={{ fontFamily: "var(--font-mono)" }}>
+              {s.latencyMs}ms · hover to inspect →
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={onContinue}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded bg-[#a3e635] text-[#0c0c0e] text-sm font-semibold hover:bg-[#bef264] transition-colors"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        Continue to {pendingStepName} →
+      </button>
+    </div>
   );
 }
 
