@@ -9,127 +9,136 @@ export interface PipelineNode {
 }
 
 const DEFAULT_NODES: PipelineNode[] = [
-  { label: "Ticket Ingestion", desc: "Parse & normalize", icon: "⬇" },
-  { label: "AI Classification", desc: "Intent detection", icon: "◈" },
-  { label: "Context Reasoning", desc: "RAG + memory", icon: "⟳" },
-  { label: "Response Generation", desc: "LLM synthesis", icon: "✦" },
-  { label: "Confidence Scoring", desc: "Quality gate", icon: "◎" },
-  { label: "Human Approval", desc: "Review & dispatch", icon: "✓" },
+  { label: "Read Request",    desc: "Incoming ticket parsed",         icon: "⬇" },
+  { label: "Classify",        desc: "Detect intent & priority",       icon: "◈" },
+  { label: "Gather Context",  desc: "Pull relevant docs & history",   icon: "⟳" },
+  { label: "Draft Response",  desc: "AI writes a reply",              icon: "✦" },
+  { label: "Quality Check",   desc: "Score confidence & tone",        icon: "◎" },
+  { label: "Human Review",    desc: "Approve, edit, or reject",       icon: "✓" },
 ];
 
 interface Props {
   workflowState: WorkflowState;
   nodes?: PipelineNode[];
+  onNodeHover?: (stepIndex: number | null) => void;
+  hoveredStep?: number | null;
 }
 
-export default function PipelineAnimation({ workflowState, nodes }: Props) {
+export default function PipelineAnimation({ workflowState, nodes, onNodeHover, hoveredStep }: Props) {
   const NODES = nodes ?? DEFAULT_NODES;
   const { steps } = workflowState;
 
   return (
-    <div className="flex flex-col gap-0">
+    <div className="flex flex-col gap-0 w-full">
       {NODES.map((node, i) => {
-        const nodeId = i;
         const step = steps[i];
-        const isRunning = step?.status === "running";
-        const isWaiting = step?.status === "waiting_approval";
+        const isRunning  = step?.status === "running";
+        const isWaiting  = step?.status === "waiting_approval";
         const isComplete = step?.status === "complete";
-        const isFailed = step?.status === "failed";
-        const isActive = isRunning || isWaiting;
+        const isFailed   = step?.status === "failed";
+        const canHover   = isComplete || isWaiting || isFailed;
+        const isHovered  = hoveredStep === i && canHover;
 
         return (
-          <div key={nodeId}>
+          <div key={i} className="flex flex-col">
+            {/* Node */}
             <div
-              className={`relative flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-300 ${
-                isActive
-                  ? "bg-[rgba(163,230,53,0.08)] border border-[rgba(163,230,53,0.2)]"
+              className={`relative flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-300 ${
+                canHover ? "cursor-pointer" : ""
+              } ${
+                isHovered
+                  ? "bg-[rgba(255,255,255,0.05)] ring-1 ring-[rgba(255,255,255,0.1)]"
+                  : isRunning
+                  ? "bg-[rgba(163,230,53,0.07)] ring-1 ring-[rgba(163,230,53,0.18)]"
+                  : isWaiting
+                  ? "bg-[rgba(251,191,36,0.06)] ring-1 ring-[rgba(251,191,36,0.15)]"
                   : isFailed
-                    ? "bg-[rgba(239,68,68,0.06)] border border-[rgba(239,68,68,0.15)]"
-                    : "border border-transparent"
+                  ? "bg-[rgba(239,68,68,0.06)] ring-1 ring-[rgba(239,68,68,0.15)]"
+                  : ""
               }`}
+              onMouseEnter={() => canHover && onNodeHover?.(i)}
+              onMouseLeave={() => onNodeHover?.(null)}
             >
+              {/* Icon circle */}
               <div
-                className={`w-7 h-7 rounded flex items-center justify-center text-[11px] flex-shrink-0 transition-all duration-300 ${
+                className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
                   isRunning
-                    ? "bg-[#a3e635] text-[#0c0c0e] node-active"
+                    ? "bg-[#a3e635] shadow-[0_0_20px_rgba(163,230,53,0.35)]"
                     : isWaiting
-                      ? "bg-[rgba(251,191,36,0.2)] text-yellow-400"
-                      : isComplete
-                        ? "bg-[rgba(163,230,53,0.2)] text-[#a3e635]"
-                        : isFailed
-                          ? "bg-[rgba(239,68,68,0.2)] text-red-400"
-                          : "bg-[#18181c] text-[#52525b]"
+                    ? "border border-[rgba(251,191,36,0.4)] bg-[rgba(251,191,36,0.1)]"
+                    : isComplete
+                    ? "border border-[rgba(163,230,53,0.3)] bg-[rgba(163,230,53,0.1)]"
+                    : isFailed
+                    ? "border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.1)]"
+                    : "border border-[rgba(255,255,255,0.07)] bg-[#111114]"
                 }`}
-                style={{ fontFamily: "var(--font-mono)" }}
               >
-                {node.icon}
+                <span
+                  className={`text-sm transition-colors duration-300 ${
+                    isRunning  ? "text-[#0c0c0e]"
+                    : isComplete ? "text-[#a3e635]"
+                    : isWaiting  ? "text-yellow-400"
+                    : isFailed   ? "text-red-400"
+                    : "text-[#3f3f46]"
+                  }`}
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  {isComplete ? "✓" : isFailed ? "✕" : node.icon}
+                </span>
               </div>
 
+              {/* Label + desc */}
               <div className="flex-1 min-w-0">
                 <div
-                  className={`text-xs font-medium leading-tight transition-colors duration-300 ${
-                    isRunning
-                      ? "text-[#f4f4f5]"
-                      : isWaiting
-                        ? "text-yellow-400"
-                        : isComplete
-                          ? "text-[#a3e635]"
-                          : isFailed
-                            ? "text-red-400"
-                            : "text-[#52525b]"
+                  className={`text-sm font-semibold leading-snug transition-colors duration-300 ${
+                    isRunning  ? "text-white"
+                    : isComplete ? "text-[#a3e635]"
+                    : isWaiting  ? "text-yellow-300"
+                    : isFailed   ? "text-red-400"
+                    : "text-[#52525b]"
                   }`}
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {node.label}
                 </div>
                 <div
-                  className="text-[10px] text-[#3f3f46] mt-0.5"
-                  style={{ fontFamily: "var(--font-mono)" }}
+                  className={`text-xs mt-0.5 leading-relaxed transition-colors duration-300 ${
+                    isRunning ? "text-[#71717a]" : "text-[#3f3f46]"
+                  }`}
+                  style={{ fontFamily: "var(--font-display)" }}
                 >
-                  {isWaiting ? "awaiting review" : node.desc}
+                  {isWaiting ? "Awaiting your review" : node.desc}
                 </div>
               </div>
 
-              {isRunning && (
-                <div className="w-1.5 h-1.5 rounded-full bg-[#a3e635] animate-pulse-dot flex-shrink-0" />
-              )}
-              {isWaiting && (
-                <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse-dot flex-shrink-0" />
-              )}
-              {isComplete && (
-                <div
-                  className="text-[10px] text-[#a3e635] flex-shrink-0"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  ✓
-                </div>
-              )}
-              {isFailed && (
-                <div
-                  className="text-[10px] text-red-400 flex-shrink-0"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  ✕
-                </div>
-              )}
-              {step?.latencyMs && isComplete && (
-                <div
-                  className="text-[9px] text-[#3f3f46] flex-shrink-0 tabular-nums"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  {step.latencyMs}ms
-                </div>
-              )}
+              {/* Right: status indicator */}
+              <div className="flex-shrink-0 flex items-center gap-2">
+                {isRunning && (
+                  <div className="w-2 h-2 rounded-full bg-[#a3e635] animate-pulse-dot" />
+                )}
+                {isWaiting && (
+                  <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse-dot" />
+                )}
+                {isComplete && (
+                  isHovered
+                    ? <span className="text-[9px] text-[#52525b]" style={{ fontFamily: "var(--font-mono)" }}>inspect →</span>
+                    : step?.latencyMs
+                      ? <span className="text-[9px] text-[#3f3f46] tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>{step.latencyMs}ms</span>
+                      : null
+                )}
+                {isFailed && (
+                  <span className="text-[9px] text-red-500" style={{ fontFamily: "var(--font-mono)" }}>failed</span>
+                )}
+              </div>
             </div>
 
+            {/* Connector line */}
             {i < NODES.length - 1 && (
-              <div className="ml-[22px] flex items-center">
-                <div
-                  className={`w-px h-3 transition-colors duration-300 ${
-                    isComplete ? "bg-[rgba(163,230,53,0.3)]" : "bg-[#27272a]"
-                  }`}
-                />
-              </div>
+              <div className="ml-[38px] w-px h-4 transition-colors duration-500" style={{
+                background: isComplete
+                  ? "rgba(163,230,53,0.3)"
+                  : "rgba(255,255,255,0.05)"
+              }} />
             )}
           </div>
         );

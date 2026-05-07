@@ -99,28 +99,28 @@ const PRIORITY_STYLE: Record<string, string> = {
 
 const NODES_BY_MODE: Record<DemoMode, PipelineNode[]> = {
   support: [
-    { label: "Ticket Ingestion",    desc: "Parse & normalize",    icon: "⬇" },
-    { label: "AI Classification",   desc: "Intent detection",     icon: "◈" },
-    { label: "Context Reasoning",   desc: "RAG + memory",         icon: "⟳" },
-    { label: "Response Generation", desc: "LLM synthesis",        icon: "✦" },
-    { label: "Confidence Scoring",  desc: "Quality gate",         icon: "◎" },
-    { label: "Human Approval",      desc: "Review & dispatch",    icon: "✓" },
+    { label: "Read Request",      desc: "Incoming ticket parsed",        icon: "⬇" },
+    { label: "Classify",          desc: "Detect intent & priority",      icon: "◈" },
+    { label: "Gather Context",    desc: "Pull relevant docs & history",  icon: "⟳" },
+    { label: "Draft Response",    desc: "AI writes a reply",             icon: "✦" },
+    { label: "Quality Check",     desc: "Score confidence & tone",       icon: "◎" },
+    { label: "Human Review",      desc: "Approve, edit, or reject",      icon: "✓" },
   ],
   listing: [
-    { label: "Listing Ingestion",     desc: "MLS + doc parse",        icon: "⬇" },
-    { label: "Market Classification", desc: "Segment + audience",     icon: "◈" },
-    { label: "Neighborhood Intel",    desc: "Permits · school · CMA", icon: "⟳" },
-    { label: "Content Generation",    desc: "Big 4 creation",         icon: "✦" },
-    { label: "Accuracy Scoring",      desc: "SEO + fact check",       icon: "◎" },
-    { label: "Agent Approval",        desc: "Review & publish",       icon: "✓" },
+    { label: "Parse Listing",     desc: "MLS data & documents read",     icon: "⬇" },
+    { label: "Segment Market",    desc: "Audience & price point matched",icon: "◈" },
+    { label: "Research Area",     desc: "Permits, schools, comps pulled",icon: "⟳" },
+    { label: "Write Copy",        desc: "Big 4 listing content drafted", icon: "✦" },
+    { label: "Accuracy Check",    desc: "Facts, SEO & tone reviewed",    icon: "◎" },
+    { label: "Agent Review",      desc: "Approve & publish",             icon: "✓" },
   ],
   investment: [
-    { label: "Market Scan",         desc: "Filter + match",       icon: "⬇" },
-    { label: "Deal Classification", desc: "Flip / BRRRR / hold",  icon: "◈" },
-    { label: "Financial Modeling",  desc: "ARV + repair est.",    icon: "⟳" },
-    { label: "Investment Memo",     desc: "Full deal analysis",   icon: "✦" },
-    { label: "ROI Threshold",       desc: "Min. return gate",     icon: "◎" },
-    { label: "Investor Approval",   desc: "Offer or pass",        icon: "✓" },
+    { label: "Scan Deal",         desc: "Property data ingested",        icon: "⬇" },
+    { label: "Identify Strategy", desc: "Flip, BRRRR, or hold?",        icon: "◈" },
+    { label: "Run the Numbers",   desc: "ARV, repairs & returns modeled",icon: "⟳" },
+    { label: "Write the Memo",    desc: "Full investment analysis",      icon: "✦" },
+    { label: "ROI Gate",          desc: "Min. return threshold checked", icon: "◎" },
+    { label: "Investor Review",   desc: "Approve offer or pass",         icon: "✓" },
   ],
 };
 
@@ -493,7 +493,7 @@ export default function LiveDemo() {
           </div>
 
           {/* ── Three-column content ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_180px_1fr] gap-0 lg:min-h-[420px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr_300px] gap-0 lg:min-h-[420px]">
 
             {/* Left: queue */}
             <div className={`p-5 border-b lg:border-b-0 lg:border-r border-[rgba(255,255,255,0.07)] flex-col gap-3 ${mobilePanel === "queue" ? "flex" : "hidden lg:flex"}`}>
@@ -583,11 +583,16 @@ export default function LiveDemo() {
             </div>
 
             {/* Middle: Pipeline */}
-            <div className={`p-5 border-b lg:border-b-0 lg:border-r border-[rgba(255,255,255,0.07)] flex-col ${mobilePanel === "pipeline" ? "flex" : "hidden lg:flex"}`}>
-              <div className="text-[10px] text-[#52525b] uppercase tracking-widest mb-3" style={{ fontFamily: "var(--font-mono)" }}>
+            <div className={`px-4 py-5 border-b lg:border-b-0 lg:border-r border-[rgba(255,255,255,0.07)] flex-col ${mobilePanel === "pipeline" ? "flex" : "hidden lg:flex"}`}>
+              <div className="text-[10px] text-[#52525b] uppercase tracking-widest mb-4" style={{ fontFamily: "var(--font-mono)" }}>
                 Pipeline
               </div>
-              <PipelineAnimation workflowState={workflowState} nodes={NODES_BY_MODE[demoMode]} />
+              <PipelineAnimation
+                workflowState={workflowState}
+                nodes={NODES_BY_MODE[demoMode]}
+                onNodeHover={setHoveredStep}
+                hoveredStep={hoveredStep}
+              />
             </div>
 
             {/* Right: output / approval / inspection */}
