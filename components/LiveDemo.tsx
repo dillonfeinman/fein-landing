@@ -432,21 +432,13 @@ export default function LiveDemo() {
                 <span className="text-[9px] text-[#27272a]" style={{ fontFamily: "var(--font-mono)" }}>no steps executed</span>
               ) : (
                 activeSteps.map((step, i) => {
-                  const isHovered = hoveredStep === step.stepIndex;
-                  const isComplete = step.status === "complete";
                   return (
                     <div
                       key={step.stepIndex}
-                      className={`flex items-center gap-1 rounded px-2 py-0.5 transition-all duration-150 ${
-                        isComplete
-                          ? "cursor-pointer hover:bg-[rgba(255,255,255,0.04)]"
-                          : ""
-                      } ${isHovered ? "bg-[rgba(255,255,255,0.06)] ring-1 ring-[rgba(255,255,255,0.08)]" : ""}`}
-                      onMouseEnter={() => isComplete ? setHoveredStep(step.stepIndex) : undefined}
-                      onMouseLeave={() => setHoveredStep(null)}
+                      className="flex items-center gap-1 rounded px-2 py-0.5"
                     >
                       {i > 0 && <span className="text-[8px] text-[#27272a] mr-1">·</span>}
-                      <span className={`text-[9px] ${STEP_COLORS[step.stepName] ?? "text-[#52525b]"} ${isHovered ? "opacity-100" : ""}`} style={{ fontFamily: "var(--font-mono)" }}>
+                      <span className={`text-[9px] ${STEP_COLORS[step.stepName] ?? "text-[#52525b]"}`} style={{ fontFamily: "var(--font-mono)" }}>
                         {step.stepName}
                       </span>
                       {step.status === "complete" && step.latencyMs !== undefined ? (
@@ -606,9 +598,7 @@ export default function LiveDemo() {
               ) : workflowState.status === "step_ready" ? (
                 <StepGateView
                   pendingStepName={workflowState.pendingStepName}
-                  completedSteps={workflowState.steps.filter(s => s.status === "complete")}
                   onContinue={() => engineRef.current?.nextStep()}
-                  onHoverStep={setHoveredStep}
                 />
               ) : workflowState.status === "waiting_approval" ? (
                 <ApprovalGate draft={draft} confidence={confidence} mode={demoMode} onApprove={handleApprove} onReject={handleReject} onEditAndApprove={handleEditAndApprove} />
@@ -700,17 +690,11 @@ function StepInspectView({
 
 function StepGateView({
   pendingStepName,
-  completedSteps,
   onContinue,
-  onHoverStep,
 }: {
   pendingStepName?: string;
-  completedSteps: import("@/lib/workflowEngine").StepExecution[];
   onContinue: () => void;
-  onHoverStep: (idx: number | null) => void;
 }) {
-  const stepColor = ({ ingest: "text-blue-400", classify: "text-purple-400", context: "text-cyan-500", generate: "text-[#a3e635]", score: "text-orange-400", approve: "text-yellow-400" } as Record<string, string>);
-
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center gap-2">
@@ -721,27 +705,8 @@ function StepGateView({
       </div>
 
       <p className="text-xs text-[#52525b] leading-relaxed" style={{ fontFamily: "var(--font-display)" }}>
-        Hover any completed step above to inspect its output, then continue to the next step.
+        Hover any step in the pipeline to inspect its output.
       </p>
-
-      {/* Completed steps as clickable list */}
-      <div className="space-y-1">
-        {completedSteps.map((s) => (
-          <button
-            key={s.stepIndex}
-            onMouseEnter={() => onHoverStep(s.stepIndex)}
-            onMouseLeave={() => onHoverStep(null)}
-            className="w-full flex items-center justify-between px-3 py-2 rounded border border-[rgba(255,255,255,0.05)] bg-[#111114] hover:border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.03)] transition-all duration-150 group"
-          >
-            <span className={`text-[10px] ${stepColor[s.stepName] ?? "text-[#52525b]"}`} style={{ fontFamily: "var(--font-mono)" }}>
-              {s.stepName}
-            </span>
-            <span className="text-[9px] text-[#3f3f46] group-hover:text-[#52525b] transition-colors" style={{ fontFamily: "var(--font-mono)" }}>
-              {s.latencyMs}ms · hover to inspect →
-            </span>
-          </button>
-        ))}
-      </div>
 
       <button
         onClick={onContinue}
