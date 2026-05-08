@@ -28,14 +28,14 @@ export default function Nav() {
         </span>
 
         <div className="hidden md:flex items-center gap-8">
-          {["Systems", "Architecture", "Pricing", "About"].map((link) => (
+          {[["Demo", "demo"], ["Pricing", "pricing"], ["About", "about"]].map(([label, id]) => (
             <a
-              key={link}
-              href={`#${link.toLowerCase()}`}
+              key={id}
+              href={`#${id}`}
               className="text-sm text-[#71717a] hover:text-[#d4d4d8] transition-colors duration-150"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {link}
+              {label}
             </a>
           ))}
         </div>

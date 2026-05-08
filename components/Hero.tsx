@@ -17,7 +17,7 @@ export default function Hero() {
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#a3e635] animate-pulse-dot" />
           <span className="text-xs text-[#71717a] tracking-wider uppercase">
-            v2.4.1 · 6 production systems · now shipping
+            Now taking projects · property management · staffing · law
           </span>
         </div>
 
@@ -33,8 +33,8 @@ export default function Hero() {
           className="text-lg sm:text-xl text-[#71717a] max-w-xl mx-auto mb-10 leading-relaxed"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Deployable AI agents with human-in-the-loop control. Built for
-          engineers, not marketers.
+          Custom AI workflows, built and deployed for your business.
+          You own everything — no subscriptions, no lock-in.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
@@ -49,11 +49,11 @@ export default function Hero() {
             </span>
           </a>
           <a
-            href="#systems"
+            href="#pricing"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded border border-[rgba(255,255,255,0.07)] text-sm text-[#d4d4d8] hover:border-[rgba(255,255,255,0.14)] transition-colors duration-150"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Explore Systems
+            See Pricing
           </a>
         </div>
 
@@ -62,10 +62,10 @@ export default function Hero() {
           style={{ fontFamily: "var(--font-mono)" }}
         >
           {[
-            "TypeScript",
-            "n8n compatible",
-            "LangChain ready",
-            "Self-hostable",
+            "LangGraph",
+            "RAG pipelines",
+            "Human-in-the-loop",
+            "Your infrastructure",
           ].map((tag, i) => (
             <span key={tag} className="flex items-center gap-2">
               {i > 0 && <span className="text-[#27272a]">·</span>}
