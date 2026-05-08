@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 
+// ── Replace this with your Formspree endpoint after signing up at formspree.io ──
+// Sign up → New Form → copy the endpoint URL (e.g. https://formspree.io/f/xxxxxxxx)
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/REPLACE_ME";
+
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const SYSTEM_TYPES = [
@@ -135,6 +139,8 @@ export default function ServiceRequest() {
   const [errors, setErrors] = useState<Errors>({});
   const [formStep, setFormStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [reqId] = useState(
     () => `REQ-${String(Math.floor(1000 + Math.random() * 9000))}`
   );
@@ -189,14 +195,47 @@ export default function ServiceRequest() {
     setFormStep((s) => s - 1);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const errs = validateStep(formStep);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
-    setSubmitted(true);
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const process = form.flowNodes.length > 0
+        ? form.flowNodes.map((n, i) => `Step ${i + 1}: ${n.label}${n.note ? ` — ${n.note}` : ""}`).join(" → ")
+        : "Not provided";
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          _subject: `New request from ${form.name || "visitor"} — ${reqId}`,
+          request_id: reqId,
+          name: form.name,
+          email: form.email,
+          company: form.company || "—",
+          role: form.role || "—",
+          workflow: form.workflow,
+          system_type: form.systemType || "—",
+          volume: form.volume || "—",
+          timeline: form.timeline || "—",
+          tools: form.tools.length > 0 ? form.tools.join(", ") : "—",
+          current_process: process,
+        }),
+      });
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        setSubmitError("Something went wrong — please email dillonfeinman@gmail.com directly.");
+      }
+    } catch {
+      setSubmitError("Could not send — please email dillonfeinman@gmail.com directly.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const isLastStep = formStep === FORM_STEPS.length - 1;
@@ -495,20 +534,28 @@ export default function ServiceRequest() {
                         <div />
                       )}
                       {isLastStep ? (
-                        <div className="flex items-center gap-4">
-                          <span
-                            className="text-[10px] text-[#3f3f46]"
-                            style={{ fontFamily: "var(--font-mono)" }}
-                          >
-                            No commitment · reply within 48hrs
-                          </span>
-                          <button
-                            type="submit"
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-[#a3e635] text-[#0c0c0e] text-sm font-semibold hover:bg-[#bef264] transition-colors duration-150"
-                            style={{ fontFamily: "var(--font-display)" }}
-                          >
-                            Send Request →
-                          </button>
+                        <div className="flex flex-col items-end gap-2">
+                          {submitError && (
+                            <p className="text-[10px] text-red-400 text-right" style={{ fontFamily: "var(--font-mono)" }}>
+                              {submitError}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-4">
+                            <span
+                              className="text-[10px] text-[#3f3f46]"
+                              style={{ fontFamily: "var(--font-mono)" }}
+                            >
+                              No commitment · reply within 48hrs
+                            </span>
+                            <button
+                              type="submit"
+                              disabled={submitting}
+                              className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-[#a3e635] text-[#0c0c0e] text-sm font-semibold hover:bg-[#bef264] disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
+                              style={{ fontFamily: "var(--font-display)" }}
+                            >
+                              {submitting ? "Sending…" : "Send Request →"}
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <button
@@ -568,7 +615,7 @@ export default function ServiceRequest() {
               <div className="mt-2 pt-6 border-t border-[rgba(255,255,255,0.05)] space-y-3">
                 {[
                   { label: "Response time", value: "< 48 hours" },
-                  { label: "Starting from", value: "$2,500" },
+                  { label: "Starting from", value: "$4,500" },
                   { label: "Refund policy", value: "7-day" },
                   { label: "Commitment", value: "None" },
                 ].map((row) => (

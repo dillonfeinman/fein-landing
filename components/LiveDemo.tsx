@@ -14,9 +14,12 @@ import {
 // ── Demo modes ─────────────────────────────────────────────────────────────────
 
 const MODES: { id: DemoMode; label: string; shortLabel: string; desc: string }[] = [
-  { id: "support",    label: "Customer Support",   shortLabel: "Support",    desc: "Triage · classify · respond" },
-  { id: "listing",   label: "Real Estate Listing", shortLabel: "Listing",    desc: "Big 4 · CMA · doc scan" },
-  { id: "investment", label: "RE Investment",      shortLabel: "Investment", desc: "Deal scan · memo · ROI gate" },
+  { id: "property_mgmt", label: "Property Management", shortLabel: "Property", desc: "Maintenance · renewals · tenants" },
+  { id: "recruiting",    label: "Recruiting",           shortLabel: "Recruit",  desc: "Screen · match · outreach" },
+  { id: "law",           label: "Law Firm",             shortLabel: "Law",      desc: "Intake · conflicts · contracts" },
+  { id: "support",       label: "Customer Support",     shortLabel: "Support",  desc: "Triage · classify · respond" },
+  { id: "listing",       label: "Real Estate Listing",  shortLabel: "Listing",  desc: "Big 4 · CMA · doc scan" },
+  { id: "investment",    label: "RE Investment",        shortLabel: "Investment", desc: "Deal scan · memo · ROI gate" },
 ];
 
 // ── Ticket scenarios ───────────────────────────────────────────────────────────
@@ -85,8 +88,70 @@ const INVESTMENT_TICKETS: TicketItem[] = [
   },
 ];
 
+const PROPERTY_TICKETS: TicketItem[] = [
+  {
+    id: "#MAINT-0041", from: "jamie.liu@tenants.com",
+    subject: "HVAC not working — Unit 4B",
+    body: "Hey, the AC stopped working last night. It's been above 85°F in my apartment all day. I've tried the thermostat but nothing happens. Can someone come look at it ASAP?",
+    priority: "P1", _scenario: "property_maint", _mode: "property_mgmt",
+    label: "Maintenance · HVAC", time: "47m ago",
+    address: "204 Maple Ave, Unit 4B", specs: "HVAC failure · urgent",
+  },
+  {
+    id: "#LEASE-0088", from: "taylor.brooks@tenants.com",
+    subject: "Lease renewal question",
+    body: "My lease is up in about two months. I'm planning to stay but wanted to know what the renewal rate would be and whether there's anything I need to do. Let me know!",
+    priority: "P2", _scenario: "property_renewal", _mode: "property_mgmt",
+    label: "Lease renewal", time: "2h ago",
+    address: "204 Maple Ave, Unit 12", specs: "Renewal · 58 days remaining",
+  },
+];
+
+const RECRUITING_TICKETS: TicketItem[] = [
+  {
+    id: "#APP-2291", from: "jordan.m@email.com",
+    subject: "Application — Backend Engineer",
+    body: "6 years of backend experience in Node.js and PostgreSQL. Led infrastructure migration at my last company — cut latency by 40%. Looking for my next challenge at a team that moves fast and owns their work.",
+    priority: "P1", _scenario: "recruit_screen", _mode: "recruiting",
+    label: "Backend Engineer", time: "just now",
+    address: "Jordan M. — Backend Engineer", specs: "6 yrs exp · Node.js · PostgreSQL",
+  },
+  {
+    id: "#JOB-0147", from: "hiring@meridiantech.com",
+    subject: "New opening: Frontend Engineer",
+    body: "We need a senior frontend engineer to own our design system and ship new product features. Strong React and TypeScript required. Target start in 4 weeks. Comp: $115–$140k.",
+    priority: "P1", _scenario: "recruit_job", _mode: "recruiting",
+    label: "Job Order · Frontend", time: "3h ago",
+    address: "Meridian Technologies", specs: "Frontend Engineer · $115–$140k",
+  },
+];
+
+const LAW_TICKETS: TicketItem[] = [
+  {
+    id: "#INQ-0834", from: "r.santos@gmail.com",
+    subject: "Potential personal injury case",
+    body: "I slipped and fell at a grocery store on March 14th. There was a wet floor with no warning sign. I broke my wrist and hurt my knee. I've had $8,400 in medical bills so far and missed two weeks of work. Looking for legal help.",
+    priority: "P1", _scenario: "law_intake", _mode: "law",
+    label: "Personal injury · intake", time: "1h ago",
+    address: "New Client Inquiry — R. Santos", specs: "Slip & fall · NY · $8,400 medical",
+  },
+  {
+    id: "#REV-0291", from: "contracts@clientco.com",
+    subject: "Contract review — Apex Solutions",
+    body: "Attached is a service agreement from Apex Solutions LLC for our new vendor relationship. We need this reviewed before signing. A few clauses looked unusual to our ops team but we're not sure what to flag.",
+    priority: "P2", _scenario: "law_contract", _mode: "law",
+    label: "Contract review", time: "4h ago",
+    address: "Service Agreement — Apex Solutions LLC", specs: "3 flagged clauses · sign pending",
+  },
+];
+
 const TICKETS_BY_MODE: Record<DemoMode, TicketItem[]> = {
-  support: SUPPORT_TICKETS, listing: LISTING_TICKETS, investment: INVESTMENT_TICKETS,
+  property_mgmt: PROPERTY_TICKETS,
+  recruiting:    RECRUITING_TICKETS,
+  law:           LAW_TICKETS,
+  support:       SUPPORT_TICKETS,
+  listing:       LISTING_TICKETS,
+  investment:    INVESTMENT_TICKETS,
 };
 
 const PRIORITY_STYLE: Record<string, string> = {
@@ -98,6 +163,30 @@ const PRIORITY_STYLE: Record<string, string> = {
 // ── Pipeline nodes ─────────────────────────────────────────────────────────────
 
 const NODES_BY_MODE: Record<DemoMode, PipelineNode[]> = {
+  property_mgmt: [
+    { label: "Read the request",   desc: "Tenant message parsed",             icon: "⬇" },
+    { label: "Check the tenant",   desc: "Lease & payment history",           icon: "◈" },
+    { label: "Look up the unit",   desc: "Maintenance history & vendors",     icon: "⟳" },
+    { label: "Draft response",     desc: "Message or work order drafted",     icon: "✦" },
+    { label: "Review details",     desc: "Accuracy & tone checked",           icon: "◎" },
+    { label: "Your approval",      desc: "Send or dispatch vendor",           icon: "✓" },
+  ],
+  recruiting: [
+    { label: "Read the submission", desc: "Resume or job order parsed",       icon: "⬇" },
+    { label: "Check the fit",       desc: "Skills matched to requirements",   icon: "◈" },
+    { label: "Research background", desc: "Experience & benchmarks pulled",   icon: "⟳" },
+    { label: "Score & summarize",   desc: "Candidate ranked and written up",  icon: "✦" },
+    { label: "Review the output",   desc: "Accuracy & tone checked",          icon: "◎" },
+    { label: "Your approval",       desc: "Reach out or move on",             icon: "✓" },
+  ],
+  law: [
+    { label: "Read the matter",     desc: "Request or document parsed",       icon: "⬇" },
+    { label: "Check conflicts",     desc: "Conflict of interest search",      icon: "◈" },
+    { label: "Research the issue",  desc: "Cases, statutes & precedents",     icon: "⟳" },
+    { label: "Draft the response",  desc: "Memo or letter prepared",          icon: "✦" },
+    { label: "Review for accuracy", desc: "Citations & completeness checked", icon: "◎" },
+    { label: "Attorney approval",   desc: "Review before sending",            icon: "✓" },
+  ],
   support: [
     { label: "Read Request",      desc: "Incoming ticket parsed",        icon: "⬇" },
     { label: "Classify",          desc: "Detect intent & priority",      icon: "◈" },
@@ -164,6 +253,120 @@ function summarizeOutput(stepName: string, output: Record<string, unknown>): str
 // ── Plain-language step context ────────────────────────────────────────────────
 
 const STEP_CONTEXT: Record<DemoMode, Array<{ upcoming: string; doing: string; done: string; detail: string }>> = {
+  property_mgmt: [
+    {
+      upcoming: "Read the request",
+      doing:    "Reading the tenant's message...",
+      done:     "Read the tenant's message",
+      detail:   "The AI read what the tenant sent — whether it's a maintenance issue, a lease question, or something else — and pulled out the key details like urgency, unit number, and what they actually need.",
+    },
+    {
+      upcoming: "Check the tenant file",
+      doing:    "Looking up tenant history...",
+      done:     "Checked the tenant file",
+      detail:   "Before responding, the AI looked up the tenant's lease status, payment history, and any prior issues or open requests — so the response is informed and accurate.",
+    },
+    {
+      upcoming: "Look up the unit",
+      doing:    "Checking maintenance history and vendor contacts...",
+      done:     "Looked up the unit",
+      detail:   "The AI checked the unit's maintenance history, any open work orders, and which vendors are available and preferred for this type of job.",
+    },
+    {
+      upcoming: "Draft a response",
+      doing:    "Writing the response or work order...",
+      done:     "Drafted a response",
+      detail:   "Using everything it found, the AI drafted a reply to the tenant and/or a work order for the vendor — with the right tone, the right details, and nothing left out.",
+    },
+    {
+      upcoming: "Review the draft",
+      doing:    "Checking for accuracy and tone...",
+      done:     "Reviewed the draft",
+      detail:   "The AI re-read its own response — checking that the facts are right, the tone is appropriate, and the tenant has everything they need to know.",
+    },
+    {
+      upcoming: "Your approval",
+      doing:    "Waiting for your review...",
+      done:     "Sent to you for review",
+      detail:   "Nothing goes to the tenant or vendor until you've seen it. Approve, edit, or reject — you always have the final say before anything is sent.",
+    },
+  ],
+  recruiting: [
+    {
+      upcoming: "Read the submission",
+      doing:    "Reading the resume or job order...",
+      done:     "Read the submission",
+      detail:   "The AI read the full resume or job order from top to bottom — extracting skills, experience, requirements, and anything else needed to make a good match.",
+    },
+    {
+      upcoming: "Check the fit",
+      doing:    "Comparing against the role requirements...",
+      done:     "Checked the fit",
+      detail:   "The AI compared the candidate's background against the role requirements — or the job order against your available pipeline — scoring how well things line up and flagging any gaps.",
+    },
+    {
+      upcoming: "Research background",
+      doing:    "Pulling benchmarks and similar profiles...",
+      done:     "Researched the background",
+      detail:   "The AI pulled data on similar candidates or placements, market rates, and any relevant context — so the assessment is grounded in real comparisons, not just the résumé alone.",
+    },
+    {
+      upcoming: "Score and write it up",
+      doing:    "Writing the candidate summary or match report...",
+      done:     "Wrote the summary",
+      detail:   "The AI produced a structured write-up: fit score, strengths, gaps, suggested next steps. For job orders, it ranked matching candidates and drafted outreach.",
+    },
+    {
+      upcoming: "Review the output",
+      doing:    "Checking accuracy and tone...",
+      done:     "Reviewed the output",
+      detail:   "The AI reviewed its own assessment — checking that the scoring is fair, the language is professional, and the recommendation is clearly supported by what was found.",
+    },
+    {
+      upcoming: "Your approval",
+      doing:    "Waiting for your sign-off...",
+      done:     "Sent to you for review",
+      detail:   "Before reaching out to any candidate or client, you review the summary or match report. Approve it, adjust it, or send it back for revision.",
+    },
+  ],
+  law: [
+    {
+      upcoming: "Read the matter",
+      doing:    "Reading the client inquiry or document...",
+      done:     "Read the matter",
+      detail:   "The AI read the full client inquiry or contract — pulling out the key facts, what's being asked, and everything an attorney would need to know before doing anything else.",
+    },
+    {
+      upcoming: "Check for conflicts",
+      doing:    "Running a conflict-of-interest search...",
+      done:     "Checked for conflicts",
+      detail:   "Before any work begins, the AI ran the new matter against your existing client list and active matters to check for any conflict of interest — something that would prevent the firm from taking the case.",
+    },
+    {
+      upcoming: "Research the issue",
+      doing:    "Looking up statutes, precedents, and similar matters...",
+      done:     "Researched the issue",
+      detail:   "The AI searched your matter library and external references for similar cases, relevant statutes, and standard contract language — the groundwork that would otherwise take an associate an hour to pull together.",
+    },
+    {
+      upcoming: "Draft the response",
+      doing:    "Preparing the memo or letter...",
+      done:     "Drafted the response",
+      detail:   "Using everything it found, the AI prepared the appropriate document — an intake memo, a client response letter, or a contract redline — structured and written to your firm's standards.",
+    },
+    {
+      upcoming: "Review for accuracy",
+      doing:    "Checking citations and completeness...",
+      done:     "Reviewed for accuracy",
+      detail:   "The AI re-read its own work — verifying that citations are correct, nothing important is missing, and the document is ready for an attorney to review without needing to fix obvious errors.",
+    },
+    {
+      upcoming: "Attorney approval",
+      doing:    "Waiting for attorney review...",
+      done:     "Sent to attorney for review",
+      detail:   "Nothing goes to a client or opposing party without attorney sign-off. The attorney reviews the draft, makes any edits, and approves it — the AI handled the legwork, the lawyer makes the call.",
+    },
+  ],
   support: [
     {
       upcoming: "Read the request",
@@ -292,11 +495,22 @@ function humanOutputFacts(stepName: string, output: Record<string, unknown>, mod
         { label: "Urgency level", value: String(output.priority ?? "—") },
         { label: "Message length", value: `${output.wordCount ?? "—"} words` },
       ];
-    case "classify":
+    case "classify": {
+      const classifyLabel =
+        mode === "investment"    ? "Recommended strategy" :
+        mode === "recruiting"    ? (output.category === "job_order" ? "Order type" : "Candidate fit") :
+        mode === "law"           ? "Matter type" :
+        mode === "property_mgmt" ? "Request type" :
+        "Issue type";
+      const classifyValue =
+        mode === "recruiting" && output.fit_score !== undefined
+          ? `${Math.round((output.fit_score as number) * 100)}% match`
+          : String(output.category ?? output.strategy ?? "—");
       return [
-        { label: mode === "investment" ? "Recommended strategy" : "Issue type", value: String(output.category ?? output.strategy ?? "—") },
+        { label: classifyLabel, value: classifyValue },
         ...(confStr ? [{ label: "How sure the AI is", value: confStr }] : []),
       ];
+    }
     case "context":
       return [
         { label: "Relevant items found", value: `${output.docsRetrieved ?? "—"}` },
@@ -518,12 +732,12 @@ export default function LiveDemo() {
           </div>
 
           {/* ── Mode switcher ── */}
-          <div className="flex items-center border-b border-[rgba(255,255,255,0.07)] bg-[#0c0c0f]">
+          <div className="flex items-center border-b border-[rgba(255,255,255,0.07)] bg-[#0c0c0f] overflow-x-auto scrollbar-none">
             {MODES.map((m) => (
               <button
                 key={m.id}
                 onClick={() => handleSelectMode(m.id)}
-                className={`px-2 sm:px-4 py-2.5 text-[10px] transition-all duration-150 border-b-2 flex-1 text-center ${
+                className={`flex-shrink-0 px-3 sm:px-4 py-2.5 text-[10px] transition-all duration-150 border-b-2 text-center whitespace-nowrap ${
                   demoMode === m.id
                     ? "border-[#a3e635] text-[#a3e635] bg-[rgba(163,230,53,0.04)]"
                     : "border-transparent text-[#52525b] hover:text-[#71717a]"
@@ -621,7 +835,7 @@ export default function LiveDemo() {
               const label = panel === "queue"
                 ? (demoMode === "support" ? "Queue" : demoMode === "listing" ? "Listings" : "Deals")
                 : panel === "pipeline" ? "Pipeline"
-                : workflowState.status === "waiting_approval" ? "⚠ Approve" : "Output";
+                : workflowState.status === "waiting_approval" ? (demoMode === "law" ? "⚠ Review" : "⚠ Approve") : "Output";
               const isApproval = panel === "output" && workflowState.status === "waiting_approval";
               return (
                 <button
@@ -648,7 +862,7 @@ export default function LiveDemo() {
             {/* Left: queue */}
             <div className={`p-5 border-b lg:border-b-0 lg:border-r border-[rgba(255,255,255,0.07)] flex-col gap-3 ${mobilePanel === "queue" ? "flex" : "hidden lg:flex"}`}>
               <div className="text-[10px] text-[#52525b] uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>
-                {demoMode === "support" ? "Ticket Queue" : demoMode === "listing" ? "Listing Queue" : "Deal Queue"}
+                {demoMode === "support" ? "Ticket Queue" : demoMode === "listing" ? "Listing Queue" : demoMode === "investment" ? "Deal Queue" : demoMode === "property_mgmt" ? "Request Queue" : demoMode === "recruiting" ? "Submission Queue" : "Matter Queue"}
               </div>
 
               <div className="space-y-1.5">
@@ -1028,7 +1242,7 @@ function ApprovalGate({ draft, confidence, mode, onApprove, onReject, onEditAndA
       {draft && (
         <div className="max-h-48 lg:max-h-56 overflow-y-auto rounded border border-[rgba(255,255,255,0.07)] bg-[#111114] p-3">
           <div className="text-[9px] text-[#3f3f46] uppercase tracking-widest mb-2" style={{ fontFamily: "var(--font-mono)" }}>
-            {mode === "support" ? "Draft Response" : mode === "listing" ? "Listing Copy Draft" : "Investment Memo Draft"}
+            {mode === "support" ? "Draft Response" : mode === "listing" ? "Listing Copy Draft" : mode === "investment" ? "Investment Memo Draft" : mode === "property_mgmt" ? "Draft Message" : mode === "recruiting" ? "Candidate Summary" : "Draft Memo"}
           </div>
           <p className="text-[10px] text-[#71717a] leading-relaxed whitespace-pre-line" style={{ fontFamily: "var(--font-display)" }}>{draft}</p>
         </div>
@@ -1036,13 +1250,13 @@ function ApprovalGate({ draft, confidence, mode, onApprove, onReject, onEditAndA
 
       <div className="flex flex-col gap-2">
         <button onClick={onApprove} className="w-full py-2.5 rounded bg-[#a3e635] text-[#0c0c0e] text-[11px] font-semibold hover:bg-[#bef264] transition-colors duration-150" style={{ fontFamily: "var(--font-mono)" }}>
-          {mode === "support" ? "Approve →" : mode === "listing" ? "Publish →" : "Submit Offer →"}
+          {mode === "support" ? "Approve & Send →" : mode === "listing" ? "Publish →" : mode === "investment" ? "Submit Offer →" : mode === "property_mgmt" ? "Send →" : mode === "recruiting" ? "Approve & Reach Out →" : "Approve & Send →"}
         </button>
         <button onClick={() => setEditing(true)} className="w-full py-2.5 rounded border border-[rgba(255,255,255,0.1)] text-[#71717a] text-[11px] font-medium hover:border-[rgba(163,230,53,0.3)] hover:text-[#a3e635] transition-colors duration-150" style={{ fontFamily: "var(--font-mono)" }}>
           Edit & Approve
         </button>
         <button onClick={onReject} className="w-full py-2.5 rounded border border-red-900/30 text-red-400 text-[11px] font-medium hover:bg-red-950/20 transition-colors duration-150" style={{ fontFamily: "var(--font-mono)" }}>
-          {mode === "investment" ? "Pass on Deal" : "Reject"}
+          {mode === "investment" ? "Pass on Deal" : mode === "law" ? "Send Back for Revision" : "Reject"}
         </button>
       </div>
     </div>
@@ -1086,7 +1300,7 @@ function FinalResult({ draft, confidence, edited, mode, onReplay }: {
         <div className="max-h-48 lg:max-h-64 overflow-y-auto rounded border border-[rgba(255,255,255,0.07)] bg-[#111114] p-3">
           <div className="flex items-center gap-2 mb-2">
             <div className="text-[9px] text-[#52525b] uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>
-              {mode === "support" ? "Dispatched Response" : mode === "listing" ? "Published Listing Copy" : "Investment Memo"}
+              {mode === "support" ? "Dispatched Response" : mode === "listing" ? "Published Listing Copy" : mode === "investment" ? "Investment Memo" : mode === "property_mgmt" ? "Sent Message" : mode === "recruiting" ? "Approved Summary" : "Approved Memo"}
             </div>
             {edited && <div className="text-[9px] text-yellow-500" style={{ fontFamily: "var(--font-mono)" }}>· edited</div>}
           </div>
