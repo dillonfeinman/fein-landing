@@ -28,7 +28,7 @@ export default function Nav() {
         </span>
 
         <div className="hidden md:flex items-center gap-8">
-          {["Systems", "Architecture", "Pricing"].map((link) => (
+          {["Systems", "Architecture", "Pricing", "About"].map((link) => (
             <a
               key={link}
               href={`#${link.toLowerCase()}`}
