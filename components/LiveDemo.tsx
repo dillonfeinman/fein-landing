@@ -18,8 +18,8 @@ const MODES: { id: DemoMode; label: string; shortLabel: string; desc: string }[]
   { id: "recruiting",    label: "Recruiting",           shortLabel: "Recruit",  desc: "Screen · match · outreach" },
   { id: "law",           label: "Law Firm",             shortLabel: "Law",      desc: "Intake · conflicts · contracts" },
   { id: "support",       label: "Customer Support",     shortLabel: "Support",  desc: "Triage · classify · respond" },
-  { id: "listing",       label: "Real Estate Listing",  shortLabel: "Listing",  desc: "Big 4 · CMA · doc scan" },
-  { id: "investment",    label: "RE Investment",        shortLabel: "Investment", desc: "Deal scan · memo · ROI gate" },
+  { id: "listing",       label: "RE Listing",           shortLabel: "Listing",  desc: "Big 4 · CMA · doc scan" },
+  { id: "investment",    label: "Investment",           shortLabel: "Invest",     desc: "Deal scan · memo · ROI gate" },
 ];
 
 // ── Ticket scenarios ───────────────────────────────────────────────────────────
@@ -732,12 +732,12 @@ export default function LiveDemo() {
           </div>
 
           {/* ── Mode switcher ── */}
-          <div className="flex items-center border-b border-[rgba(255,255,255,0.07)] bg-[#0c0c0f] overflow-x-auto scrollbar-none">
+          <div className="flex items-center border-b border-[rgba(255,255,255,0.07)] bg-[#0c0c0f]">
             {MODES.map((m) => (
               <button
                 key={m.id}
                 onClick={() => handleSelectMode(m.id)}
-                className={`flex-shrink-0 px-3 sm:px-4 py-2.5 text-[10px] transition-all duration-150 border-b-2 text-center whitespace-nowrap ${
+                className={`flex-1 px-2 py-2.5 text-[10px] transition-all duration-150 border-b-2 text-center ${
                   demoMode === m.id
                     ? "border-[#a3e635] text-[#a3e635] bg-[rgba(163,230,53,0.04)]"
                     : "border-transparent text-[#52525b] hover:text-[#71717a]"
