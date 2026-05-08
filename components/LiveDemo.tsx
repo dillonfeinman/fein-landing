@@ -161,6 +161,164 @@ function summarizeOutput(stepName: string, output: Record<string, unknown>): str
   }
 }
 
+// ── Plain-language step context ────────────────────────────────────────────────
+
+const STEP_CONTEXT: Record<DemoMode, Array<{ upcoming: string; doing: string; done: string; detail: string }>> = {
+  support: [
+    {
+      upcoming: "Read the request",
+      doing:    "Reading the incoming message...",
+      done:     "Read the incoming message",
+      detail:   "The AI read the support ticket from start to finish — pulling out the key details, how urgent it seems, and what the person is actually asking for.",
+    },
+    {
+      upcoming: "Figure out what's needed",
+      doing:    "Figuring out what type of issue this is...",
+      done:     "Figured out what's needed",
+      detail:   "The AI identified what category this falls into (billing, technical, access, etc.) and how confident it is. This helps route it to the right response.",
+    },
+    {
+      upcoming: "Look up relevant information",
+      doing:    "Looking up relevant docs and past cases...",
+      done:     "Looked up relevant information",
+      detail:   "Before writing anything, the AI searched your knowledge base for similar cases, relevant policies, and any history with this customer.",
+    },
+    {
+      upcoming: "Write a response",
+      doing:    "Writing a response...",
+      done:     "Wrote a draft response",
+      detail:   "Using everything it found, the AI wrote a reply — in your voice, addressing exactly what was asked. No template, no generic answer.",
+    },
+    {
+      upcoming: "Review the draft",
+      doing:    "Checking the draft for accuracy and tone...",
+      done:     "Reviewed the draft",
+      detail:   "The AI re-read its own response and scored it — checking that the facts are right, the tone is appropriate, and nothing important was missed.",
+    },
+    {
+      upcoming: "Your approval",
+      doing:    "Waiting for your review...",
+      done:     "Sent to you for review",
+      detail:   "Nothing goes out without a human seeing it first. You can approve as-is, edit it, or reject it and send the ticket back to the queue.",
+    },
+  ],
+  listing: [
+    {
+      upcoming: "Read the listing",
+      doing:    "Reading the listing details...",
+      done:     "Read the listing",
+      detail:   "The AI read every detail about the property — specs, documents, photos notes, and any inspection flags. Everything needed to write about it accurately.",
+    },
+    {
+      upcoming: "Size up the market",
+      doing:    "Figuring out the right audience and price position...",
+      done:     "Sized up the market",
+      detail:   "Based on the property's location, price, and features, the AI identified who the most likely buyer is and how to position the listing to appeal to them.",
+    },
+    {
+      upcoming: "Research the area",
+      doing:    "Pulling comps, permits, and local data...",
+      done:     "Researched the area",
+      detail:   "The AI looked up recently sold comparable homes, local school ratings, permit history, and anything else a buyer's agent would ask about.",
+    },
+    {
+      upcoming: "Write the listing copy",
+      doing:    "Writing the listing description...",
+      done:     "Wrote the listing copy",
+      detail:   "The AI drafted the full listing — headline, description, feature highlights — written for the target buyer, not just a list of specs.",
+    },
+    {
+      upcoming: "Review for accuracy",
+      doing:    "Checking facts, tone, and completeness...",
+      done:     "Reviewed the copy",
+      detail:   "The AI checked its own work: are all the facts correct, does the tone match the audience, is anything missing that buyers typically want to know?",
+    },
+    {
+      upcoming: "Your sign-off",
+      doing:    "Waiting for your approval to publish...",
+      done:     "Sent to agent for approval",
+      detail:   "Before anything goes live, the agent reviews the copy. Approve it, make edits, or send it back. You always have final say.",
+    },
+  ],
+  investment: [
+    {
+      upcoming: "Read the deal",
+      doing:    "Reading the deal details...",
+      done:     "Read the deal",
+      detail:   "The AI read everything about the property — asking price, condition notes, location, and what the seller is looking for. Building a complete picture before any analysis.",
+    },
+    {
+      upcoming: "Pick a strategy",
+      doing:    "Figuring out the best investment approach...",
+      done:     "Picked a strategy",
+      detail:   "Based on the property's condition, price, and market, the AI determined whether this deal is best as a fix-and-flip, a BRRRR, or a long-term hold.",
+    },
+    {
+      upcoming: "Run the numbers",
+      doing:    "Modeling repairs, ARV, and projected returns...",
+      done:     "Ran the numbers",
+      detail:   "The AI estimated repair costs, projected the after-repair value using recent comps, and calculated expected returns under the chosen strategy.",
+    },
+    {
+      upcoming: "Write the investment memo",
+      doing:    "Writing up the full analysis...",
+      done:     "Wrote the investment memo",
+      detail:   "A full write-up of the deal: strategy, numbers, risks, comparable sales, and a clear recommendation. Everything needed to make a decision.",
+    },
+    {
+      upcoming: "Check the return threshold",
+      doing:    "Checking if the deal clears your minimum return...",
+      done:     "Checked the return threshold",
+      detail:   "The AI compared the projected return against your minimum target. If it doesn't clear the bar, it flags it — so you don't waste time on deals that don't pencil.",
+    },
+    {
+      upcoming: "Your decision",
+      doing:    "Waiting for your call...",
+      done:     "Sent to investor for a decision",
+      detail:   "The memo is ready. You can approve an offer, pass on the deal, or ask for a second look. The AI has done the legwork — the decision is yours.",
+    },
+  ],
+};
+
+function humanOutputFacts(stepName: string, output: Record<string, unknown>, mode: DemoMode): Array<{ label: string; value: string }> {
+  const conf = output.confidence as number | undefined;
+  const confStr = conf !== undefined
+    ? `${Math.round(conf * 100)}% — ${conf > 0.9 ? "very confident" : conf > 0.75 ? "reasonably confident" : "uncertain"}`
+    : undefined;
+
+  switch (stepName) {
+    case "ingest":
+      return [
+        { label: "Urgency level", value: String(output.priority ?? "—") },
+        { label: "Message length", value: `${output.wordCount ?? "—"} words` },
+      ];
+    case "classify":
+      return [
+        { label: mode === "investment" ? "Recommended strategy" : "Issue type", value: String(output.category ?? output.strategy ?? "—") },
+        ...(confStr ? [{ label: "How sure the AI is", value: confStr }] : []),
+      ];
+    case "context":
+      return [
+        { label: "Relevant items found", value: `${output.docsRetrieved ?? "—"}` },
+      ];
+    case "generate":
+      return [
+        { label: "Draft length", value: `${output.wordCount ?? "—"} words` },
+      ];
+    case "score":
+      return [
+        ...(confStr ? [{ label: "Quality score", value: confStr }] : []),
+        { label: "Passed quality check", value: output.passesThreshold ? "Yes — looks good" : "No — flagged for review" },
+      ];
+    case "approve":
+      return [
+        { label: "Decision", value: String(output.action ?? "—") },
+      ];
+    default:
+      return [];
+  }
+}
+
 type MobilePanel = "queue" | "pipeline" | "output";
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -592,6 +750,7 @@ export default function LiveDemo() {
               {hoveredStep !== null && workflowState.steps[hoveredStep]?.status !== "pending" ? (
                 <StepInspectView
                   step={workflowState.steps[hoveredStep]}
+                  mode={demoMode}
                   continueLabel={workflowState.status === "step_ready" ? workflowState.pendingStepName : undefined}
                   onContinue={workflowState.status === "step_ready" ? () => { setHoveredStep(null); engineRef.current?.nextStep(); } : undefined}
                 />
@@ -607,7 +766,7 @@ export default function LiveDemo() {
               ) : workflowState.status === "failed" ? (
                 <RejectedState onReplay={handleReplay} />
               ) : (
-                <StepOutput state={workflowState} />
+                <PipelineStatus state={workflowState} mode={demoMode} />
               )}
             </div>
           </div>
@@ -624,30 +783,35 @@ export default function LiveDemo() {
 
 function StepInspectView({
   step,
+  mode,
   continueLabel,
   onContinue,
 }: {
   step: import("@/lib/workflowEngine").StepExecution;
+  mode: DemoMode;
   continueLabel?: string;
   onContinue?: () => void;
 }) {
-  const stepColor = ({ ingest: "text-blue-400", classify: "text-purple-400", context: "text-cyan-500", generate: "text-[#a3e635]", score: "text-orange-400", approve: "text-yellow-400" } as Record<string, string>)[step.stepName] ?? "text-[#52525b]";
+  const ctx = STEP_CONTEXT[mode][step.stepIndex];
+  const facts = humanOutputFacts(step.stepName, step.output ?? {}, mode);
 
   return (
-    <div className="flex flex-col gap-3 h-full">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className={`text-[10px] uppercase tracking-widest font-medium ${stepColor}`} style={{ fontFamily: "var(--font-mono)" }}>
-            {step.stepName}
-          </span>
-          <span className="text-[9px] text-[#3f3f46]" style={{ fontFamily: "var(--font-mono)" }}>
-            {step.latencyMs !== undefined ? `${step.latencyMs}ms` : step.status}
-          </span>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-[#d4d4d8] leading-snug mb-1" style={{ fontFamily: "var(--font-display)" }}>
+            {ctx?.done ?? step.stepName}
+          </p>
+          {step.latencyMs !== undefined && (
+            <span className="text-[9px] text-[#3f3f46]" style={{ fontFamily: "var(--font-mono)" }}>
+              Finished in {formatMs(step.latencyMs)}
+            </span>
+          )}
         </div>
         {onContinue && (
           <button
             onClick={onContinue}
-            className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#a3e635] text-[#0c0c0e] text-[10px] font-semibold hover:bg-[#bef264] transition-colors"
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#a3e635] text-[#0c0c0e] text-[10px] font-semibold hover:bg-[#bef264] transition-colors"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             ▶ {continueLabel ?? "continue"}
@@ -655,31 +819,20 @@ function StepInspectView({
         )}
       </div>
 
-      {/* Trace */}
-      <div className="rounded border border-[rgba(255,255,255,0.07)] bg-[#111114] p-3 overflow-y-auto max-h-44 space-y-0.5">
-        {step.trace.length === 0 ? (
-          <span className="text-[10px] text-[#3f3f46]" style={{ fontFamily: "var(--font-mono)" }}>no trace</span>
-        ) : (
-          step.trace.map((line, i) => (
-            <div key={i} className={`text-[10px] leading-relaxed ${line.startsWith("←") ? "text-[#71717a]" : "text-[#52525b]"}`} style={{ fontFamily: "var(--font-mono)" }}>
-              {line}
-            </div>
-          ))
-        )}
-      </div>
+      {ctx?.detail && (
+        <p className="text-xs text-[#71717a] leading-relaxed" style={{ fontFamily: "var(--font-display)" }}>
+          {ctx.detail}
+        </p>
+      )}
 
-      {/* Output KV (skip draft) */}
-      {step.output && (
-        <div className="space-y-px">
-          {Object.entries(step.output)
-            .filter(([k]) => k !== "draft" && k !== "ingestedAt" && k !== "dispatchedAt" && k !== "chargeIds")
-            .slice(0, 8)
-            .map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between gap-4 px-2 py-1 rounded hover:bg-[rgba(255,255,255,0.02)]">
-                <span className="text-[9px] text-[#3f3f46] shrink-0" style={{ fontFamily: "var(--font-mono)" }}>{k}</span>
-                <span className="text-[9px] text-[#71717a] tabular-nums truncate text-right" style={{ fontFamily: "var(--font-mono)" }}>{String(v)}</span>
-              </div>
-            ))}
+      {facts.length > 0 && (
+        <div className="rounded border border-[rgba(255,255,255,0.07)] bg-[#111114] divide-y divide-[rgba(255,255,255,0.04)]">
+          {facts.map(({ label, value }) => (
+            <div key={label} className="flex items-center justify-between gap-4 px-3 py-2">
+              <span className="text-[10px] text-[#3f3f46] shrink-0" style={{ fontFamily: "var(--font-display)" }}>{label}</span>
+              <span className="text-[10px] text-[#71717a] text-right" style={{ fontFamily: "var(--font-display)" }}>{value}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -737,35 +890,62 @@ function KVBlock({ label, rows }: { label: string; rows: { key: string; value: s
   );
 }
 
-// ── Step output ────────────────────────────────────────────────────────────────
+// ── Pipeline status (right panel default) ─────────────────────────────────────
 
-function StepOutput({ state }: { state: WorkflowState }) {
-  const currentStep = state.steps[state.currentStep];
+function PipelineStatus({ state, mode }: { state: WorkflowState; mode: DemoMode }) {
+  const ctx = STEP_CONTEXT[mode];
+  const isActive = state.status !== "idle";
+
   return (
-    <div className="flex flex-col">
-      <div className="text-[10px] text-[#52525b] uppercase tracking-widest mb-3" style={{ fontFamily: "var(--font-mono)" }}>Step Output</div>
-      <div className="min-h-[160px] lg:min-h-0 lg:flex-1 rounded border border-[rgba(255,255,255,0.07)] bg-[#111114] p-3 flex flex-col gap-1.5 overflow-y-auto">
-        {!currentStep || state.status === "idle" ? (
-          <span className="text-[11px] text-[#3f3f46]" style={{ fontFamily: "var(--font-mono)" }}>waiting for pipeline...</span>
-        ) : (
-          <>
-            <div className="text-[9px] text-[#a3e635] uppercase tracking-widest mb-1" style={{ fontFamily: "var(--font-mono)" }}>{currentStep.stepName}</div>
-            {currentStep.trace.slice(-6).map((line, i) => (
-              <div key={i} className={`text-[10px] leading-relaxed ${line.startsWith("←") ? "text-[#71717a]" : "text-[#52525b]"}`} style={{ fontFamily: "var(--font-mono)" }}>
-                {line}
-              </div>
-            ))}
-          </>
-        )}
+    <div className="flex flex-col gap-0">
+      <div className="text-[10px] text-[#52525b] uppercase tracking-widest mb-3" style={{ fontFamily: "var(--font-mono)" }}>
+        {isActive ? "What’s happening" : "What will happen"}
       </div>
-      <div className="mt-3 space-y-1">
-        {state.steps.filter((s) => s.status === "complete" && s.latencyMs).map((s) => (
-          <div key={s.stepIndex} className="flex items-center justify-between text-[9px]" style={{ fontFamily: "var(--font-mono)" }}>
-            <span className={STEP_COLORS[s.stepName] ?? "text-[#3f3f46]"}>{s.stepName}</span>
-            <span className="text-[#52525b] tabular-nums">{s.latencyMs}ms</span>
+
+      {state.steps.map((step, i) => {
+        const isComplete = step.status === "complete";
+        const isRunning  = step.status === "running";
+        const isWaiting  = step.status === "waiting_approval";
+
+        const text = isComplete            ? ctx[i].done
+                   : isRunning || isWaiting ? ctx[i].doing
+                   :                         ctx[i].upcoming;
+
+        return (
+          <div
+            key={i}
+            className={`flex items-start gap-3 px-3 py-2.5 rounded transition-colors duration-300 ${isRunning ? "bg-[rgba(163,230,53,0.04)]" : ""}`}
+          >
+            <div className={`mt-1 w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all duration-300 ${
+              isComplete ? "bg-[rgba(163,230,53,0.3)]"
+              : isRunning ? "bg-[#a3e635] animate-pulse-dot"
+              : isWaiting ? "bg-[rgba(251,191,36,0.4)]"
+              : "bg-[#1c1c20]"
+            }`} />
+            <div className="flex-1 min-w-0">
+              <p className={`text-xs leading-snug transition-colors duration-300 ${
+                isComplete ? "text-[#52525b]"
+                : isRunning ? "text-[#d4d4d8]"
+                : isWaiting ? "text-yellow-300"
+                : "text-[#27272a]"
+              }`} style={{ fontFamily: "var(--font-display)" }}>
+                {text}
+              </p>
+              {isComplete && step.latencyMs !== undefined && (
+                <span className="text-[9px] text-[#2a2a2e]" style={{ fontFamily: "var(--font-mono)" }}>
+                  {formatMs(step.latencyMs)}
+                </span>
+              )}
+            </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
+
+      {(state.status === "running" || state.status === "step_ready") && (
+        <p className="text-[10px] text-[#2a2a2e] mt-3 px-3" style={{ fontFamily: "var(--font-display)" }}>
+          Hover a step in the pipeline to see what it found
+        </p>
+      )}
     </div>
   );
 }
