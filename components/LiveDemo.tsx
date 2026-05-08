@@ -18,7 +18,7 @@ const MODES: { id: DemoMode; label: string; shortLabel: string; desc: string }[]
   { id: "recruiting",    label: "Recruiting",           shortLabel: "Recruit",  desc: "Screen · match · outreach" },
   { id: "law",           label: "Law Firm",             shortLabel: "Law",      desc: "Intake · conflicts · contracts" },
   { id: "support",       label: "Customer Support",     shortLabel: "Support",  desc: "Triage · classify · respond" },
-  { id: "listing",       label: "RE Listing",           shortLabel: "Listing",  desc: "Big 4 · CMA · doc scan" },
+  { id: "listing",       label: "Real Estate",          shortLabel: "Listing",  desc: "Big 4 · CMA · doc scan" },
   { id: "investment",    label: "Investment",           shortLabel: "Invest",     desc: "Deal scan · memo · ROI gate" },
 ];
 
