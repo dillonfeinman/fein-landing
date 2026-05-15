@@ -29,19 +29,19 @@ const FAQS = [
   },
   {
     q: "Can you build a workflow that isn't listed on this page?",
-    a: "Yes. The demos here — customer support, real estate, investment analysis — are examples of the underlying capability. If your workflow involves reading documents, classifying inputs, retrieving context, and generating structured outputs, we can build it. Describe your process in the request form and we'll tell you within 24 hours if it's a fit.",
+    a: "Yes. The demos here — customer support, real estate, investment analysis — are examples of the underlying capability. If your workflow involves reading documents, classifying inputs, retrieving context, and generating structured outputs, we can build it. Book a scoping call or describe your process in the request form and we'll tell you if it's a fit.",
   },
   {
     q: "What happens when our process changes?",
-    a: "Workflows are not one-and-done. As your process evolves, we update the classification logic, swap in new data sources, and retune confidence thresholds. Clients on the Multi-System Stack and above have a direct channel for exactly this. Changes to simple steps typically take a few hours; architectural changes take a day or two.",
+    a: "Workflows are not one-and-done. As your process evolves, we update the classification logic, swap in new data sources, and retune confidence thresholds. Retainer clients have ongoing tuning and support for exactly this. Changes to simple steps typically take a few hours; architectural changes take a day or two.",
   },
   {
     q: "Is the pricing one-time or ongoing?",
-    a: "The packages listed are one-time — you're buying the built, deployed system and its documentation. Ongoing costs are only your own API usage (typically $20–200/mo depending on volume) and any third-party tools you connect. Retainer arrangements for continued development and maintenance are available separately.",
+    a: "Both options are available. Project pricing is one-time for the built, deployed system and its documentation. Retainers are for ongoing monitoring, tuning, and new workflow development. Your ongoing tool costs are usually API usage and any third-party platforms you already use.",
   },
   {
     q: "What does support look like after launch?",
-    a: "All packages include 30 days of post-launch support for issues directly related to the deployed system. The Multi-System Stack includes a priority support channel. AI Workflow OS clients get an async architecture review channel with direct access. For high-volume production systems we also offer SLA-backed support retainers.",
+    a: "Project builds include post-launch support based on the package, from 30 to 90 days. Retainers add active monitoring, bug fixes, tuning, and continued development. For high-volume production systems we can scope stronger response expectations before the build starts.",
   },
 ];
 

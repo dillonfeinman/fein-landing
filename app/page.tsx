@@ -1,7 +1,9 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
+import Capabilities from "@/components/Capabilities";
 import LiveDemo from "@/components/LiveDemo";
 import RevenueEngine from "@/components/RevenueEngine";
+import EngagementProcess from "@/components/EngagementProcess";
 import ROICalculator from "@/components/ROICalculator";
 import Pricing from "@/components/Pricing";
 import About from "@/components/About";
@@ -16,8 +18,10 @@ export default function Page() {
       <Nav />
       <main>
         <Hero />
+        <Capabilities />
         <LiveDemo />
         <RevenueEngine />
+        <EngagementProcess />
         <ROICalculator />
         <Pricing />
         <About />

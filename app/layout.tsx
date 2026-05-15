@@ -15,9 +15,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fein AI — Production AI Workflow Systems",
+  title: "Fein AI — Custom AI Workflow Systems",
   description:
-    "Deployable AI agents with human-in-the-loop control. Blueprints for real AI automation systems.",
+    "Custom AI workflow systems for business operations, with human review, tool integrations, and client-owned deployments.",
 };
 
 export default function RootLayout({

@@ -1,3 +1,5 @@
+import { BOOKING_URL, isExternalUrl } from "@/lib/site";
+
 const AGENTS = [
   {
     step: "Agent A",
@@ -29,24 +31,28 @@ const QUALIFIED_MEETING = [
   "Accepted calendar invite with context attached",
 ];
 
-const PHASES = [
+const FITS = [
   {
-    phase: "Phase 1",
-    title: "Internal alpha for Fein",
-    target: "Mid-size companies running legacy Java 8/11 systems",
-    hook:
-      "I built an AI agent that identified three specific bottlenecks in your current tech stack. Can I show you the report?",
+    label: "High-ticket B2B services",
+    desc: "When the value of a single closed deal is high enough that one good meeting covers the cost of many attempts. Legal, staffing, consulting, commercial services.",
   },
   {
-    phase: "Phase 2",
-    title: "White-label revenue engine",
-    target: "High-ticket markets like commercial HVAC, solar, SaaS, or specialized services",
-    hook:
-      "Plug a client's niche, offer, and qualification rules into the LangGraph workflow, then charge on qualified calendar outcomes.",
+    label: "Niche markets with identifiable triggers",
+    desc: "Industries where buying signals are readable — a new hire, a funding round, a compliance deadline, a technology change. The more specific the trigger, the better the outreach.",
+  },
+  {
+    label: "Teams drowning in prospecting grunt work",
+    desc: "If your sales team spends hours researching accounts, writing one-off emails, or chasing leads that never had a real reason to buy — this takes that work off their plate.",
+  },
+  {
+    label: "Founders doing their own outbound",
+    desc: "Early-stage companies where the founder is the best salesperson but can't spend half their week on research and cold messages. The engine runs the top of funnel so they focus on the call.",
   },
 ];
 
 export default function RevenueEngine() {
+  const bookingIsExternal = isExternalUrl(BOOKING_URL);
+
   return (
     <section
       id="revenue-engine"
@@ -203,7 +209,9 @@ export default function RevenueEngine() {
                 the proof needed to make the meeting worth taking.
               </p>
               <a
-                href="#request"
+                href={BOOKING_URL}
+                target={bookingIsExternal ? "_blank" : undefined}
+                rel={bookingIsExternal ? "noreferrer" : undefined}
                 className="inline-flex items-center justify-center w-full px-4 py-2.5 rounded bg-[#a3e635] text-[#0c0c0e] text-sm font-semibold hover:bg-[#bef264] transition-colors duration-150"
                 style={{ fontFamily: "var(--font-display)" }}
               >
@@ -213,43 +221,30 @@ export default function RevenueEngine() {
           </aside>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[rgba(255,255,255,0.07)] rounded-lg overflow-hidden">
-          {PHASES.map((phase) => (
-            <div key={phase.phase} className="bg-[#0e0e11] p-7">
-              <div
-                className="text-[10px] text-[#a3e635] uppercase tracking-widest mb-3"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                {phase.phase}
-              </div>
-              <h3
-                className="text-lg font-bold text-[#f4f4f5] mb-2"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {phase.title}
-              </h3>
-              <p
-                className="text-xs text-[#52525b] leading-relaxed mb-5"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {phase.target}
-              </p>
-              <div className="rounded border border-[rgba(163,230,53,0.12)] bg-[rgba(163,230,53,0.03)] px-4 py-3">
+        <div className="rounded-lg border border-[rgba(255,255,255,0.07)] overflow-hidden">
+          <div className="px-7 py-5 border-b border-[rgba(255,255,255,0.07)] bg-[#0a0a0d]">
+            <span className="text-[10px] text-[#52525b] uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>
+              Good fit for
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[rgba(255,255,255,0.07)]">
+            {FITS.map((fit) => (
+              <div key={fit.label} className="bg-[#0e0e11] px-7 py-6">
                 <div
-                  className="text-[9px] text-[#a3e635] uppercase tracking-widest mb-2"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  Outreach hook
-                </div>
-                <p
-                  className="text-sm text-[#71717a] leading-relaxed"
+                  className="text-sm font-semibold text-[#d4d4d8] mb-2"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  {phase.hook}
+                  {fit.label}
+                </div>
+                <p
+                  className="text-xs text-[#52525b] leading-relaxed"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {fit.desc}
                 </p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-// ── Replace this with your Formspree endpoint after signing up at formspree.io ──
-// Sign up → New Form → copy the endpoint URL (e.g. https://formspree.io/f/xxxxxxxx)
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/REPLACE_ME";
+import { CONTACT_EMAIL, FORM_ENDPOINT } from "@/lib/site";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -199,6 +196,22 @@ export default function ServiceRequest() {
     setFormStep((s) => s - 1);
   }
 
+  function buildRequestSummary(process: string) {
+    return [
+      `Request ID: ${reqId}`,
+      `Name: ${form.name || "Not provided"}`,
+      `Email: ${form.email || "Not provided"}`,
+      `Company: ${form.company || "Not provided"}`,
+      `Role: ${form.role || "Not provided"}`,
+      `Workflow: ${form.workflow}`,
+      `System type: ${form.systemType || "Not provided"}`,
+      `Volume: ${form.volume || "Not provided"}`,
+      `Timeline: ${form.timeline || "Not provided"}`,
+      `Tools: ${form.tools.length > 0 ? form.tools.join(", ") : "Not provided"}`,
+      `Current process: ${process}`,
+    ].join("\n");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const errs = validateStep(formStep);
@@ -212,7 +225,16 @@ export default function ServiceRequest() {
       const process = form.flowNodes.length > 0
         ? form.flowNodes.map((n, i) => `Step ${i + 1}: ${n.label}${n.note ? ` — ${n.note}` : ""}`).join(" → ")
         : "Not provided";
-      const res = await fetch(FORMSPREE_ENDPOINT, {
+
+      if (!FORM_ENDPOINT) {
+        const subject = encodeURIComponent(`New workflow request — ${reqId}`);
+        const body = encodeURIComponent(buildRequestSummary(process));
+        window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+        setSubmitError(`Form delivery is not configured yet. Email ${CONTACT_EMAIL} directly if your mail app did not open.`);
+        return;
+      }
+
+      const res = await fetch(FORM_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
@@ -233,10 +255,10 @@ export default function ServiceRequest() {
       if (res.ok) {
         setSubmitted(true);
       } else {
-        setSubmitError("Something went wrong — please email dillonfeinman@gmail.com directly.");
+        setSubmitError(`Something went wrong — please email ${CONTACT_EMAIL} directly.`);
       }
     } catch {
-      setSubmitError("Could not send — please email dillonfeinman@gmail.com directly.");
+      setSubmitError(`Could not send — please email ${CONTACT_EMAIL} directly.`);
     } finally {
       setSubmitting(false);
     }
@@ -261,14 +283,23 @@ export default function ServiceRequest() {
             className="text-3xl sm:text-4xl font-bold text-[#f4f4f5] tracking-tight"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Tell us what you want to automate
+            Prefer to write it out?
           </h2>
           <p
             className="text-[#71717a] mt-3 text-base max-w-lg"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Describe the work you want off your plate. We&apos;ll take it from
-            there.
+            Tell us what you want automated. The form is the slower path if
+            you&apos;re not ready to book a scoping call yet.
+          </p>
+          <p
+            className="text-xs text-[#3f3f46] mt-3"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            Prefer email?{" "}
+            <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#52525b] hover:text-[#a3e635] transition-colors">
+              {CONTACT_EMAIL}
+            </a>
           </p>
         </div>
 
@@ -557,7 +588,7 @@ export default function ServiceRequest() {
                               className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-[#a3e635] text-[#0c0c0e] text-sm font-semibold hover:bg-[#bef264] disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
                               style={{ fontFamily: "var(--font-display)" }}
                             >
-                              {submitting ? "Sending…" : "Send Request →"}
+                              {submitting ? "Sending…" : FORM_ENDPOINT ? "Send Request →" : "Open Email Draft →"}
                             </button>
                           </div>
                         </div>
@@ -620,7 +651,7 @@ export default function ServiceRequest() {
                 {[
                   { label: "Response time", value: "< 48 hours" },
                   { label: "Starting from", value: "$4,500" },
-                  { label: "Refund policy", value: "7-day" },
+                  { label: "Primary CTA", value: "Book call" },
                   { label: "Commitment", value: "None" },
                 ].map((row) => (
                   <div

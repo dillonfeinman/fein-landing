@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 const AUTOMATION_RATE = 0.82;
+const STARTING_PROJECT_PRICE = 4_500;
 
 function formatDollars(n: number): string {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
@@ -61,7 +62,7 @@ export default function ROICalculator() {
   const hoursSaved     = hoursPerMonth * AUTOMATION_RATE;
   const monthlySavings = hoursSaved * rate;
   const annualSavings  = monthlySavings * 12;
-  const paybackDays    = monthlySavings > 0 ? Math.ceil((149 / monthlySavings) * 30) : 0;
+  const paybackDays    = monthlySavings > 0 ? Math.ceil((STARTING_PROJECT_PRICE / monthlySavings) * 30) : 0;
   const ftesReclaimed  = +(hoursSaved / 160).toFixed(1);
 
   const barPct = Math.min(AUTOMATION_RATE * 100, 100);
@@ -175,7 +176,7 @@ export default function ROICalculator() {
                 { label: "Hours automated / mo", value: formatHours(hoursSaved), sub: `of ${formatHours(hoursPerMonth)} total` },
                 { label: "FTEs reclaimed", value: ftesReclaimed === 1 ? "1.0" : String(ftesReclaimed), sub: "full-time equivalent" },
                 { label: "Monthly savings", value: formatDollars(monthlySavings), sub: "in labor costs" },
-                { label: "Payback period", value: paybackDays <= 1 ? "< 1 day" : `${paybackDays} days`, sub: "on $149 deployment" },
+                { label: "Payback period", value: paybackDays <= 1 ? "< 1 day" : `${paybackDays} days`, sub: "on $4,500 project" },
               ].map((m) => (
                 <div key={m.label} className="rounded border border-[rgba(255,255,255,0.06)] bg-[#0e0e11] p-3">
                   <div className="text-[9px] text-[#3f3f46] uppercase tracking-widest mb-1.5" style={{ fontFamily: "var(--font-mono)" }}>{m.label}</div>
