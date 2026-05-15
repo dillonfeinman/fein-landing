@@ -169,6 +169,37 @@ export default function Pricing() {
           </div>
         </div>
 
+        {/* Performance model */}
+        <div className="rounded-lg border border-[rgba(163,230,53,0.14)] bg-[rgba(163,230,53,0.035)] px-6 py-5 mb-10">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-5 justify-between">
+            <div className="max-w-xl">
+              <div className="text-[10px] text-[#a3e635] uppercase tracking-widest mb-2" style={{ fontFamily: "var(--font-mono)" }}>
+                Revenue Engine pilot
+              </div>
+              <p className="text-sm text-[#d4d4d8] leading-relaxed" style={{ fontFamily: "var(--font-display)" }}>
+                For outbound growth systems, we can structure the build around qualified meetings: deep account research, human-reviewed outreach, and a success fee only when the calendar invite is real.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 min-w-0 lg:min-w-[360px]">
+              {[
+                { label: "Qualified meeting", value: "$250-$500" },
+                { label: "What you buy", value: "Calendar outcomes" },
+                { label: "Human gate", value: "Before send" },
+                { label: "Best fit", value: "High-ticket niches" },
+              ].map((item) => (
+                <div key={item.label}>
+                  <div className="text-[9px] text-[#3f3f46] uppercase tracking-widest mb-1" style={{ fontFamily: "var(--font-mono)" }}>
+                    {item.label}
+                  </div>
+                  <div className="text-xs text-[#a3e635] font-medium" style={{ fontFamily: "var(--font-mono)" }}>
+                    {item.value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Billing toggle */}
         <div className="flex justify-center mb-10">
           <div className="flex items-center gap-1 p-1 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0e0e11]">

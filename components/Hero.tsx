@@ -17,7 +17,7 @@ export default function Hero() {
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#a3e635] animate-pulse-dot" />
           <span className="text-xs text-[#71717a] tracking-wider uppercase">
-            Now taking projects · property management · staffing · law
+            Now taking projects · revenue engines · property management · law
           </span>
         </div>
 

@@ -28,7 +28,7 @@ export default function Nav() {
         </span>
 
         <div className="hidden md:flex items-center gap-8">
-          {[["Demo", "demo"], ["Pricing", "pricing"], ["About", "about"]].map(([label, id]) => (
+          {[["Demo", "demo"], ["Revenue", "revenue-engine"], ["Pricing", "pricing"], ["About", "about"]].map(([label, id]) => (
             <a
               key={id}
               href={`#${id}`}

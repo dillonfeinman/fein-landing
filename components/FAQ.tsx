@@ -117,10 +117,10 @@ export default function FAQ() {
           style={{ fontFamily: "var(--font-mono)" }}
         >
           Still have a specific question?{" "}
-          <a href="#service-request" className="text-[#52525b] hover:text-[#71717a] underline underline-offset-2 transition-colors duration-150">
+          <a href="#request" className="text-[#52525b] hover:text-[#71717a] underline underline-offset-2 transition-colors duration-150">
             Describe your workflow
           </a>{" "}
-          and we'll respond within 24 hours.
+          and we&apos;ll respond within 24 hours.
         </p>
       </div>
     </section>

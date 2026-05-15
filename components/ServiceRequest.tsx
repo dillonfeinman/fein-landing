@@ -10,6 +10,7 @@ const FORMSPREE_ENDPOINT = "https://formspree.io/f/REPLACE_ME";
 
 const SYSTEM_TYPES = [
   "Customer Support",
+  "Revenue Engine / Pay-Per-Meeting",
   "Lead Qualification",
   "Document Processing",
   "Sales Outreach",
@@ -37,6 +38,9 @@ const TOOLS = [
   "LangChain",
   "OpenAI",
   "Anthropic",
+  "HubSpot",
+  "Apollo",
+  "LinkedIn Sales Navigator",
   "Make",
   "Zapier",
   "Pinecone",

@@ -1,6 +1,7 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import LiveDemo from "@/components/LiveDemo";
+import RevenueEngine from "@/components/RevenueEngine";
 import ROICalculator from "@/components/ROICalculator";
 import Pricing from "@/components/Pricing";
 import About from "@/components/About";
@@ -16,6 +17,7 @@ export default function Page() {
       <main>
         <Hero />
         <LiveDemo />
+        <RevenueEngine />
         <ROICalculator />
         <Pricing />
         <About />

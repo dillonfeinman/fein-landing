@@ -593,7 +593,8 @@ export default function LiveDemo() {
       workflowState.status === "complete" ||
       workflowState.status === "failed"
     ) {
-      setMobilePanel("output");
+      const id = window.setTimeout(() => setMobilePanel("output"), 0);
+      return () => window.clearTimeout(id);
     }
   }, [workflowState.status]);
 
