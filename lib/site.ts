@@ -1,7 +1,8 @@
 export const CONTACT_EMAIL = "dillonfeinman@gmail.com";
 
 export const BOOKING_URL =
-  process.env.NEXT_PUBLIC_BOOKING_URL?.trim() || "#request";
+  process.env.NEXT_PUBLIC_BOOKING_URL?.trim() ||
+  "https://calendly.com/dillonfeinman/30min";
 
 export const FORM_ENDPOINT =
   process.env.NEXT_PUBLIC_FORMSPREE_ENDPOINT?.trim() || "";
