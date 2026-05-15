@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BOOKING_URL, isExternalUrl } from "@/lib/site";
 
 // ── Data ───────────────────────────────────────────────────────────────────────
 
@@ -20,7 +21,7 @@ const PROJECT_TIERS = [
       "30 days of support after launch",
     ],
     example: "e.g. email triage, lead scoring, document extraction",
-    cta: "Start a Project",
+    cta: "Book Scoping Call",
     highlighted: false,
   },
   {
@@ -39,7 +40,7 @@ const PROJECT_TIERS = [
       "60 days of support after launch",
     ],
     example: "e.g. lead comes in → qualifies → drafts outreach → waits for your approval",
-    cta: "Start a Project",
+    cta: "Book Scoping Call",
     highlighted: true,
   },
   {
@@ -59,7 +60,7 @@ const PROJECT_TIERS = [
       "90 days of support after launch",
     ],
     example: "e.g. entire support, sales, or ops workflow",
-    cta: "Start a Project",
+    cta: "Book Scoping Call",
     highlighted: false,
   },
 ];
@@ -139,6 +140,7 @@ type BillingMode = "project" | "retainer";
 export default function Pricing() {
   const [mode, setMode] = useState<BillingMode>("project");
   const [showCompare, setShowCompare] = useState(false);
+  const bookingIsExternal = isExternalUrl(BOOKING_URL);
 
   const tiers = mode === "project" ? PROJECT_TIERS : RETAINER_TIERS;
 
@@ -273,7 +275,9 @@ export default function Pricing() {
 
               {/* CTA */}
               <a
-                href="#request"
+                href={BOOKING_URL}
+                target={bookingIsExternal ? "_blank" : undefined}
+                rel={bookingIsExternal ? "noreferrer" : undefined}
                 className={`text-center text-sm font-medium py-2.5 px-4 rounded transition-all duration-150 ${
                   tier.highlighted
                     ? "bg-[#a3e635] text-[#0c0c0e] hover:bg-[#bef264]"
@@ -305,11 +309,13 @@ export default function Pricing() {
             </p>
           </div>
           <a
-            href="#request"
+            href={BOOKING_URL}
+            target={bookingIsExternal ? "_blank" : undefined}
+            rel={bookingIsExternal ? "noreferrer" : undefined}
             className="flex-shrink-0 text-sm font-medium px-5 py-2.5 rounded border border-[rgba(255,255,255,0.09)] text-[#d4d4d8] hover:border-[rgba(163,230,53,0.3)] hover:text-[#a3e635] transition-all duration-150 whitespace-nowrap"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Let&apos;s talk →
+            Book call →
           </a>
         </div>
 
