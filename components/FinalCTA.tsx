@@ -13,18 +13,18 @@ export default function FinalCTA() {
           className="text-base text-[#71717a] max-w-md mx-auto mb-10 leading-relaxed"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Get production-grade AI workflow blueprints. One-time purchase, yours
-          forever.
+          Bring a real workflow, revenue engine, or operational bottleneck. We
+          scope it, build it, deploy it, and hand it over.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <a
-            href="#pricing"
+            href="#request"
             className="group inline-flex items-center gap-2 px-6 py-3 rounded bg-[#a3e635] text-[#0c0c0e] text-sm font-semibold hover:bg-[#bef264] transition-colors duration-150"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Get Access — from $49
+            Start a project
             <span className="transition-transform duration-150 group-hover:translate-x-0.5">
-              →
+              &rarr;
             </span>
           </a>
         </div>
@@ -32,7 +32,7 @@ export default function FinalCTA() {
           className="text-[11px] text-[#3f3f46] mt-5"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          7-day refund · Instant delivery · No subscription
+          Scoping call first · custom build · no software lock-in
         </p>
       </div>
     </section>
